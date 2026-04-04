@@ -1,6 +1,6 @@
 import "./config.css";
 import "./style.css";
-import { initRouter } from "./assets/router.js";
+import { initRouter } from "./assets/router.ts";
 import { splitLines } from "./assets/text-split.js";
 
 import './assets/experience.js'
