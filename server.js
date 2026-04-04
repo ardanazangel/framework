@@ -1,0 +1,104 @@
+import fs from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { createServer } from 'node:http'
+import { createGzip } from 'node:zlib'
+import path from 'node:path'
+
+const isProduction = process.env.NODE_ENV === 'production'
+const port = process.env.PORT || 5173
+const base = process.env.BASE || '/'
+
+// -- prerender --
+// run: node server.js --prerender
+// generates dist/render.json at build time so the server can serve it as a static file
+// to disable: remove --prerender from the build pipeline (server falls back to SSR)
+if (process.argv.includes('--prerender')) {
+  const { renderAll } = await import('./dist/server/entry-server.js')
+  await fs.writeFile('./dist/render.json', JSON.stringify(renderAll()))
+  await fs.rm('./dist/server', { recursive: true })
+  console.log('prerendered dist/render.json')
+  process.exit(0)
+}
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+}
+
+let vite
+let serverModule
+
+if (!isProduction) {
+  const { createServer: createVite } = await import('vite')
+  vite = await createVite({ server: { middlewareMode: true }, appType: 'custom', base })
+}
+
+async function getModule() {
+  if (vite) return vite.ssrLoadModule('/src/entry-server.js')
+  serverModule ??= await import('./dist/server/entry-server.js')
+  return serverModule
+}
+
+async function serveStatic(req, res) {
+  const url = new URL(req.url, 'http://x')
+  const filePath = path.join('./dist', url.pathname)
+  try {
+    if ((await fs.stat(filePath)).isDirectory()) return false
+    const mime = MIME[path.extname(filePath)] ?? 'application/octet-stream'
+    res.setHeader('Content-Type', mime)
+    if (req.headers['accept-encoding']?.includes('gzip')) {
+      res.setHeader('Content-Encoding', 'gzip')
+      createReadStream(filePath).pipe(createGzip()).pipe(res)
+    } else {
+      createReadStream(filePath).pipe(res)
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+createServer(async (req, res) => {
+  const url = new URL(req.url, 'http://x')
+
+  if (!isProduction) {
+    await new Promise((resolve) => vite.middlewares(req, res, resolve))
+    if (res.writableEnded) return
+  }
+
+  // in production, static assets (including pre-generated render.json) take priority
+  if (isProduction && await serveStatic(req, res)) return
+
+  if (url.pathname === '/render.json') {
+    const { renderAll } = await getModule()
+    res.setHeader('Content-Type', 'application/json')
+    return res.end(JSON.stringify(renderAll()))
+  }
+
+  if (url.pathname === '/render') {
+    const reqPath = url.searchParams.get('path') || '/'
+    const { render } = await getModule()
+    res.setHeader('Content-Type', 'application/json')
+    return res.end(JSON.stringify({ cache: { [reqPath]: { html: render(reqPath).html } } }))
+  }
+
+  // SPA fallback
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+
+  if (isProduction) {
+    let html = await fs.readFile('./dist/index.html', 'utf-8')
+    return res.end(html)
+  }
+
+  let html = await fs.readFile('./index.html', 'utf-8')
+  html = await vite.transformIndexHtml(url.pathname, html)
+  res.end(html)
+}).listen(port, () => console.log(`Server started at http://localhost:${port}`))
