@@ -77,6 +77,13 @@ export function initRouter(preloaded: PageCache = {}) {
   wrapInPage();
   setTimeout(() => dispatch("page:mount", { path: location.pathname }));
 
+  document.addEventListener("pointerenter", (e) => {
+    if (!(e.target instanceof Element)) return;
+    const a = e.target.closest<HTMLAnchorElement>("a[href]");
+    if (!a || a.origin !== location.origin || a.target) return;
+    if (a.pathname !== location.pathname) getHtml(a.pathname);
+  }, { capture: true });
+
   document.addEventListener("click", (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>("a[href]");
     if (!a || a.origin !== location.origin || a.target) return;
