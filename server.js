@@ -8,17 +8,6 @@ const isProduction = process.env.NODE_ENV === 'production'
 const port = process.env.PORT || 5173
 const base = process.env.BASE || '/'
 
-// -- prerender --
-// run: node server.js --prerender
-// generates dist/render.json at build time so the server can serve it as a static file
-// to disable: remove --prerender from the build pipeline (server falls back to SSR)
-if (process.argv.includes('--prerender')) {
-  const { renderAll } = await import('./dist/server/entry-server.js')
-  await fs.writeFile('./dist/render.json', JSON.stringify(renderAll()))
-  await fs.rm('./dist/server', { recursive: true })
-  console.log('prerendered dist/render.json')
-  process.exit(0)
-}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -77,17 +66,13 @@ createServer(async (req, res) => {
   // in production, static assets (including pre-generated render.json) take priority
   if (isProduction && await serveStatic(req, res)) return
 
-  if (url.pathname === '/render.json') {
-    const { renderAll } = await getModule()
-    res.setHeader('Content-Type', 'application/json')
-    return res.end(JSON.stringify(renderAll()))
-  }
-
-  if (url.pathname === '/render') {
-    const reqPath = url.searchParams.get('path') || '/'
-    const { render } = await getModule()
-    res.setHeader('Content-Type', 'application/json')
-    return res.end(JSON.stringify({ cache: { [reqPath]: { html: render(reqPath).html } } }))
+  if (url.searchParams.has('render')) {
+    const { render, renderAll, layout } = await getModule()
+    const page = render(url.pathname)
+    res.setHeader('Content-Type', 'application/x-ndjson')
+    res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
+    setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
+    return
   }
 
   // SPA fallback

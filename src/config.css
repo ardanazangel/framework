@@ -3,11 +3,26 @@
     padding: 0;
 }
 
+@font-face {
+    font-family: "nmb";
+    src: url("/nmb.woff2");
+    font-display: swap;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "nmr";
+    src: url("/nmr.woff2");
+    font-display: swap;
+    font-weight: normal;
+}
+
 html {
     -webkit-text-size-adjust: none;
     -webkit-font-smoothing: antialiased;
     cursor: default;
     -webkit-tap-highlight-color: transparent;
+    background-color: black;
 }
 
 html,
@@ -35,35 +50,24 @@ button {
             var(--size-container-max));
     --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 
-    --s-2: 0.125em;
-    /* 2px */
-    --s-4: 0.25em;
-    /* 4px */
-    --s-8: 0.5em;
-    /* 8px */
-    --s-12: 0.75em;
-    /* 12px */
-    --s-16: 1em;
-    /* 16px */
-    --s-24: 1.5em;
-    /* 24px */
-    --s-32: 2em;
-    /* 32px */
-    --s-40: 2.5em;
-    /* 40px */
-    --s-48: 3em;
-    /* 48px */
-    --s-64: 4em;
-    /* 64px */
-    --s-80: 5em;
-    /* 80px */
-    --s-96: 6em;
-    /* 96px */
-    --s-128: 8em;
-    /* 128px */
-
-    --white: #ffffff;
-    --black: #000000;
+    --in-1: cubic-bezier(0.47, 0, 0.745, 0.715);
+    --out-1: cubic-bezier(0.39, 0.575, 0.565, 1);
+    --in-out1: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+    --i2: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+    --o2: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --io2: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    --i3: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    --o3: cubic-bezier(0.215, 0.61, 0.355, 1);
+    --io3: cubic-bezier(0.645, 0.045, 0.355, 1);
+    --i4: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    --o4: cubic-bezier(0.165, 0.84, 0.44, 1);
+    --io4: cubic-bezier(0.77, 0, 0.175, 1);
+    --i5: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    --o5: cubic-bezier(0.23, 1, 0.32, 1);
+    --io5: cubic-bezier(0.86, 0, 0.07, 1);
+    --i6: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+    --o6: cubic-bezier(0.19, 1, 0.22, 1);
+    --io6: cubic-bezier(1, 0, 0, 1);
 }
 
 /* Tablet */
@@ -93,6 +97,23 @@ button {
     }
 }
 
+a {
+    all: unset;
+    opacity: 0.5;
+    transition: opacity 0.4s var(--o2);
+    font-family: "nmr";
+}
+
+a:hover {
+    opacity: 0.9;
+    cursor: pointer;
+}
+
+a.active {
+    opacity: 1;
+}
+
+
 canvas {
     position: fixed;
     top: 0;
@@ -105,13 +126,25 @@ canvas {
 /* === Base === */
 
 body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: "nmb";
     font-size: var(--size-font);
     color: var(--black);
     background: var(--white);
     position: relative;
     scrollbar-width: none;
     isolation: isolate;
+}
+
+.page {
+    background-color: #f2f2f2;
+    height: fit-content;
+    min-height: 100vh;
+
+
+    img {
+        width: 100vw;
+        height: 100vh;
+    }
 }
 
 span.line {
@@ -129,7 +162,7 @@ span.line-inner {
     display: inline-block;
     white-space: nowrap;
     transform: translateY(150%);
-    transition: transform 1s ease;
+    transition: transform 1s var(--o4);
     will-change: transform;
 }
 
@@ -139,4 +172,35 @@ span.line {
 
 span.line-inner.on {
     transform: translateY(0%);
+}
+
+h1 {
+    font-size: normal;
+}
+
+.progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+
+    width: 100vw;
+    height: 1em;
+    background: red;
+
+    transform: translate3d(-100vw, 0, 0);
+    will-change: transform;
+
+    pointer-events: none;
+    z-index: 9999;
+}
+
+img[loading="lazy"],
+video[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.8s var(--o3);
+}
+
+img[loading="lazy"].loaded,
+video[loading="lazy"].loaded {
+    opacity: 1;
 }

@@ -1,3 +1,46 @@
-.container {
-  width: 30em;
+#home-wrapper {
+  padding-left: 11.8em;
+  display: flex;
+  align-items: center;
+  height: 100vh;
+
+  h1 {
+    font-size: 16em;
+    font-weight: 400;
+    line-height: 0.8;
+
+    span:last-child {
+      padding-left: 1.25em;
+    }
+  }
+}
+
+nav {
+  position: fixed;
+  padding: 2em;
+  z-index: 10;
+  right: 0;
+  display: flex;
+  gap: 2em;
+}
+
+a {
+  font-size: 1.5em;
+  line-height: 0.7;
+}
+
+.paragraph {
+  margin-top: 7em;
+  margin-left: 8em;
+  width: 10em;
+  width: 18.4em;
+}
+
+p{
+  font-family: "nmr";
+  font-size: 1.5em;
+}
+
+.progress-bar {
+  transition: transform 0.4s var(--in-out-4);
 }

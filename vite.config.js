@@ -1,7 +1,17 @@
-import { defineConfig } from 'vite'
-
-export default defineConfig({
-  build: {
-    outDir: 'dist',
-  },
-})
+export default {
+  plugins: [
+    {
+      name: 'minify-html',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          return html
+            .replace(/<!--(?!<!)[^\[>][\s\S]*?-->/g, '')
+            .replace(/\s+/g, ' ')
+            .replace(/> </g, '><')
+            .trim()
+        }
+      }
+    }
+  ]
+}

@@ -1,9 +1,13 @@
-import "./config.css";
 import "./style.css";
-import { initRouter } from "./assets/router.ts";
-import { splitLines } from "./assets/text-split.js";
 
-import './assets/experience.js'
+import { initRouter, addToCache } from "./assets/router.ts";
+import { splitLines } from "./assets/text-split.js";
+import { emit as dispatch } from "./assets/lifecycle.js";
+
+import './assets/media.js'
+import './assets/sound.js'
+import './assets/grid.js'
+import './assets/loader.js'
 
 const isMobile = () =>
   navigator.userAgentData?.mobile ??
@@ -16,13 +20,44 @@ if (isDesktop()) {
   ]);
 }
 
-const res = await fetch("/render.json");
-const pages = await res.json();
+dispatch("loader:start", null);
+const res = await fetch(window.location.pathname + "?render");
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+
+// first line: current page + layout
+let buf = "";
+while (true) {
+  const { value, done } = await reader.read();
+  buf += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+  const nl = buf.indexOf("\n");
+  if (nl !== -1 || done) {
+    const line = buf.slice(0, nl === -1 ? buf.length : nl);
+    buf = nl === -1 ? "" : buf.slice(nl + 1);
+    var data = JSON.parse(line);
+    break;
+  }
+}
+
+document.body.insertAdjacentHTML("afterbegin", data.layout);
+document.title = data.title;
 
 const root = document.getElementById("_root");
-root.innerHTML = pages[window.location.pathname]?.html ?? "";
+root.innerHTML = data.body ?? "";
 
-initRouter(pages);
+initRouter();
+(async () => {
+  while (true) {
+    const { value, done } = await reader.read();
+    buf += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    const nl = buf.indexOf("\n");
+    if (nl !== -1 || done) {
+      const line = buf.slice(0, nl === -1 ? buf.length : nl);
+      if (line) addToCache(JSON.parse(line).cache);
+      break;
+    }
+  }
+})();
 
 splitLines([...document.querySelectorAll(".lines")]);
 
