@@ -17,7 +17,7 @@ function playTone({ type = "sine", freq = 400, duration = 0.1, volume = 0.1 }) {
 }
 
 const sounds = {
-  a:      () => playTone({ type: "sine",     freq: 800,  duration: 0.05 }),
+  a:      () => playTone({ type: "sine",     freq: 600,  duration: 0.05 }),
   button: () => playTone({ type: "square",   freq: 1200, duration: 0.03 }),
   _doc:   () => playTone({ type: "sine",     freq: 200,  duration: 0.1  }),
 };

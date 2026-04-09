@@ -2,7 +2,7 @@ import "./style.css";
 
 import { initRouter, addToCache } from "./assets/router.ts";
 import { splitLines } from "./assets/text-split.js";
-import { emit as dispatch } from "./assets/lifecycle.js";
+import { emit as dispatch, on } from "./assets/lifecycle.js";
 
 import './assets/media.js'
 import './assets/sound.js'
@@ -46,6 +46,7 @@ const root = document.getElementById("_root");
 root.innerHTML = data.body ?? "";
 
 initRouter();
+addToCache({ [window.location.pathname]: { body: data.body, title: data.title } });
 (async () => {
   while (true) {
     const { value, done } = await reader.read();
@@ -61,13 +62,13 @@ initRouter();
 
 splitLines([...document.querySelectorAll(".lines")]);
 
-document.addEventListener("page:before-insert", (e) => {
+on("page:before-insert", (detail) => {
   requestAnimationFrame(() => {
-    splitLines([...e.detail.el.querySelectorAll(".lines")]);
+    splitLines([...detail.el.querySelectorAll(".lines")]);
   });
 });
 
-document.addEventListener("page:mount", () => {
+on("page:mount", () => {
   document.querySelectorAll(".line-inner").forEach((el, i) => {
     setTimeout(() => el.classList.add("on"), i * 20);
   });

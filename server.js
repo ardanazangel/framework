@@ -8,6 +8,20 @@ const isProduction = process.env.NODE_ENV === 'production'
 const port = process.env.PORT || 5173
 const base = process.env.BASE || '/'
 
+const fontDir = isProduction ? './dist' : './public'
+const fontFiles = (await fs.readdir(fontDir)).filter(f => f.endsWith('.woff2'))
+const fontPreloads = fontFiles
+  .map(f => `<link rel="preload" href="/${f}" as="font" type="font/woff2" crossorigin>`)
+  .join('\n    ')
+
+const cssPreload = isProduction
+  ? (await fs.readdir('./dist/assets')).filter(f => f.endsWith('.css'))
+    .map(f => `<link rel="preload" href="/assets/${f}" as="style" crossorigin>`)
+    .join('\n    ')
+  : ''
+
+const preloads = [fontPreloads, cssPreload].filter(Boolean).join('\n    ')
+
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -80,10 +94,10 @@ createServer(async (req, res) => {
 
   if (isProduction) {
     let html = await fs.readFile('./dist/index.html', 'utf-8')
-    return res.end(html)
+    return res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
   }
 
   let html = await fs.readFile('./index.html', 'utf-8')
   html = await vite.transformIndexHtml(url.pathname, html)
-  res.end(html)
+  res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
 }).listen(port, () => console.log(`Server started at http://localhost:${port}`))

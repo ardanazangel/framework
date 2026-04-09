@@ -1,5 +1,7 @@
-export const emit = (name, detail = null) =>
-  document.dispatchEvent(new CustomEvent(name, { detail }));
+const listeners = {}
+
+export const emit = (name, detail) =>
+  listeners[name]?.forEach(fn => fn(detail))
 
 export const on = (name, fn) =>
-  document.addEventListener(name, (e) => fn(e.detail));
+  (listeners[name] ??= []).push(fn)
