@@ -94,6 +94,18 @@ window.addEventListener('loader:complete', () => {
 });
 ```
 
+**Preloading other pages** — edit `src/assets/preload.js` and add the routes you want preloaded. Their images are fetched and tracked by the loader before it completes.
+
+```js
+// src/assets/preload.js
+const paths = [
+  '/nike',
+  '/sony',
+];
+```
+
+Already imported in `entry-client.js` — no extra setup needed.
+
 > `on('loader:complete', fn)` won't work — the event is dispatched from inline script via `window.dispatchEvent`, not through the lifecycle `emit`. Use `window.addEventListener` directly.
 
 ## Lifecycle events

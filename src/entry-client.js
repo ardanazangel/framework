@@ -4,8 +4,8 @@ import { initRouter, addToCache } from "./assets/router.ts";
 import { splitLines } from "./assets/text-split.js";
 import { emit as dispatch, on } from "./assets/lifecycle.js";
 
+import './assets/preload.js';
 import './assets/media.js'
-// import './assets/sound.js'
 import './assets/grid.js'
 
 const isMobile = () =>
@@ -43,6 +43,19 @@ document.title = data.title;
 
 const root = document.getElementById("_root");
 root.innerHTML = data.body ?? "";
+
+window.dispatchEvent(new CustomEvent('loader:track', {
+  detail: [...root.querySelectorAll('img[src]')].map(img => img.src)
+}));
+
+window.dispatchEvent(new CustomEvent('loader:ready'));
+
+on("page:before-insert", ({ el }) => {
+  window.dispatchEvent(new CustomEvent('loader:track', {
+    detail: [...el.querySelectorAll('img[src]')].map(img => img.getAttribute('src'))
+  }));
+  window.dispatchEvent(new CustomEvent('loader:ready'));
+});
 
 initRouter();
 addToCache({ [window.location.pathname]: { body: data.body, title: data.title } });
