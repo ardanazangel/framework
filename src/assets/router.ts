@@ -18,6 +18,9 @@ const getPage = () => document.querySelector<HTMLElement>(".page")!;
 const waitForAnimation = (el: Element) =>
   new Promise<void>((res) => el.addEventListener("animationend", () => res(), { once: true }));
 
+const waitForLoader = () =>
+  new Promise<void>(res => window.addEventListener("loader:complete", () => res(), { once: true }));
+
 function wrapInPage() {
   const root = document.querySelector("#_root")!;
   const page = document.createElement("div");
@@ -71,15 +74,33 @@ async function navigate(path: string, push = true) {
   navigating = true;
   dispatch("loader:start", null);
 
+  // Timeout de 15 segundos máximo para evitar que el loader se quede visible
+  const loaderTimeout = setTimeout(() => {
+    console.warn(`Navigation timeout for path: ${path}`);
+    dispatch("loader:complete", null);
+  }, 15000);
+
   let page: PageData;
-  try { page = await fetchPage(path); }
-  catch { navigating = false; dispatch("loader:done", null); return; }
+  try { 
+    page = await fetchPage(path); 
+  }
+  catch (err) { 
+    console.error("Navigation failed:", err);
+    clearTimeout(loaderTimeout);
+    dispatch("loader:complete", null);
+    navigating = false;
+    return; 
+  }
 
   document.title = page.title;
   const newPage = document.createElement("div");
   newPage.className = "page page-in";
   newPage.innerHTML = page.body;
+  const loaderDone = waitForLoader();
   dispatch("page:before-insert", { path, el: newPage });
+
+  await loaderDone;
+  clearTimeout(loaderTimeout);
 
   const oldPath = location.pathname;
   const oldPage = getPage();
@@ -96,13 +117,12 @@ async function navigate(path: string, push = true) {
   if (push) history.pushState({}, "", path);
   scrollTo(0, 0);
 
-
   await waitForAnimation(oldPage);
   dispatch("page:destroy", { path: oldPath });
   oldPage.remove();
   newPage.classList.remove("page-in");
   dispatch("page:mount", { path: location.pathname });
-  dispatch("loader:done", null);
+  dispatch("loader:complete", null);
   navigating = false;
 }
 

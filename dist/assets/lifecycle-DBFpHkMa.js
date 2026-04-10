@@ -1,1 +1,0 @@
-var e={},t=(t,n)=>e[t]?.forEach(e=>e(n)),n=(t,n)=>(e[t]??=[]).push(n);export{n,t};

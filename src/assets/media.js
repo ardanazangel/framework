@@ -8,9 +8,14 @@ function init() {
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("loaded");
-          observer.unobserve(entry.target);
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        observer.unobserve(el);
+        if (el.complete) {
+          el.classList.add("loaded");
+        } else {
+          el.addEventListener("load", () => el.classList.add("loaded"), { once: true });
+          el.addEventListener("error", () => el.classList.add("loaded"), { once: true });
         }
       });
     },

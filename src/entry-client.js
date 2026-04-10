@@ -5,9 +5,8 @@ import { splitLines } from "./assets/text-split.js";
 import { emit as dispatch, on } from "./assets/lifecycle.js";
 
 import './assets/media.js'
-import './assets/sound.js'
+// import './assets/sound.js'
 import './assets/grid.js'
-import './assets/loader.js'
 
 const isMobile = () =>
   navigator.userAgentData?.mobile ??
@@ -62,13 +61,8 @@ addToCache({ [window.location.pathname]: { body: data.body, title: data.title } 
 
 splitLines([...document.querySelectorAll(".lines")]);
 
-on("page:before-insert", (detail) => {
-  requestAnimationFrame(() => {
-    splitLines([...detail.el.querySelectorAll(".lines")]);
-  });
-});
-
 on("page:mount", () => {
+  splitLines([...document.querySelectorAll(".page .lines")]);
   document.querySelectorAll(".line-inner").forEach((el, i) => {
     setTimeout(() => el.classList.add("on"), i * 20);
   });

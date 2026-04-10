@@ -187,18 +187,16 @@
         font-size: normal;
       }
 
-      .progress-bar {
+      #loader {
         position: fixed;
-        bottom: 0;
-        left: 0;
+        bottom: 1em;
+        right: 1em;
 
-        width: 100vw;
-        height: 1em;
-        background: red;
+        font-family: "nmb";
+        font-size: 1em;
+        color: red;
 
-        transform: translate3d(-100vw, 0, 0);
-        will-change: transform;
-
+        opacity: 0;
         pointer-events: none;
         z-index: 9999;
       }
@@ -216,9 +214,64 @@
     </style>
   </head>
   <body>
+    <div id="loader"></div>
     <grid-layout count="12"></grid-layout>
     <main id="_root"></main>
-    <!-- <canvas></canvas> -->
+    <script>
+      const el = document.getElementById('loader');
+      window.dispatchEvent(new CustomEvent('loader:start'));
+
+      function complete() {
+        setTimeout(() => {
+          el.style.opacity = 0;
+          window.dispatchEvent(new CustomEvent('loader:complete'));
+        }, 200);
+      }
+
+      function trackSrcs(srcs) {
+        if (!srcs.length) { complete(); return; }
+
+        const proxies = srcs.map(src => {
+          const p = new Image();
+          p.src = src;
+          return p;
+        });
+
+        if (proxies.every(p => p.complete)) {
+          complete();
+          return;
+        }
+
+        let settled = 0;
+        const settle = () => {
+          el.textContent = Math.round(++settled / proxies.length * 100);
+          if (settled === proxies.length) complete();
+        };
+
+        for (const p of proxies) {
+          if (p.complete) { settle(); continue; }
+          p.onload = p.onerror = settle;
+        }
+      }
+
+      window.addEventListener('loader:start', () => {
+        el.textContent = '0';
+        el.style.opacity = 1;
+      });
+
+      (() => {
+        const root = document.getElementById('_root');
+        const observer = new MutationObserver(() => {
+          observer.disconnect();
+          trackSrcs([...root.querySelectorAll('img[src]')].map(img => img.src));
+        });
+        observer.observe(root, { childList: true });
+      })();
+
+      window.addEventListener('page:before-insert', (e) => {
+        trackSrcs([...e.detail.el.querySelectorAll('img[src]')].map(img => img.getAttribute('src')));
+      });
+    </script>
     <script type="module" src="/src/entry-client.js"></script>
   </body>
 </html>
