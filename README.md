@@ -7,7 +7,7 @@ Minimal SSR/SPA hybrid built on Vite. Node dev server, Bun prod server, streamin
 | | |
 |---|---|
 | Dev server | Node.js HTTP + Vite middleware (HMR) |
-| Prod server | Bun.serve with gzip |
+| Prod server | Node.js HTTP with gzip streaming |
 | Renderer | `entry-server.js` → NDJSON stream (body first, cache second) |
 | Router | SPA client router, prefetch on hover, CSS transitions, page cache |
 | Scroll | Lenis smooth scroll (desktop only, lerp 0.09) |
@@ -15,6 +15,7 @@ Minimal SSR/SPA hybrid built on Vite. Node dev server, Bun prod server, streamin
 | Media | IntersectionObserver lazy fade-in for `img/video[loading="lazy"]` |
 | Grid | `<grid-layout count="12">` web component, toggle with `Shift+G` |
 | Lifecycle | `emit(name, detail)` / `on(name, fn)` event bus |
+| 3D | Three.js WebGPU canvas, fixed full-screen background (`z-index: -1`) |
 
 ## Commands
 
@@ -43,14 +44,16 @@ src/
     home.html
     about.html
   assets/
+    boot.js           # initial NDJSON fetch, populates DOM + cache before router starts
     router.ts         # SPA router
     lifecycle.js      # event bus
+    loader.js         # asset load tracker, progress counter, trackPromise API
     scroll.js         # Lenis wrapper
     text-split.js     # splitText / splitLines
     media.js          # lazy load observer
     grid.js           # grid overlay web component
     sound.js          # (disabled)
-    experience.js     # three.js canvas
+    experience.js     # three.js WebGPU canvas
     lenis/            # lenis source
 ```
 
@@ -128,7 +131,7 @@ All events go through `emit` / `on` from `lifecycle.js`, and are also dispatched
 | Event | Detail | When |
 |---|---|---|
 | `loader:start` | `null` | navigation begins or initial load |
-| `loader:complete` | `null` | images loaded + 2s delay |
+| `loader:complete` | `null` | images loaded + 200ms delay |
 | `page:before-insert` | `{ path, el }` | new page element built, before DOM insert |
 | `page:mount` | `{ path }` | new page visible, old page removed |
 | `page:destroy` | `{ path }` | old page just removed |
