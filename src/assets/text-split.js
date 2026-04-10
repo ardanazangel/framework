@@ -63,7 +63,12 @@ export function splitText(html) {
 let ctx;
 
 function splitContainer(container) {
-  ctx ??= new OffscreenCanvas(0, 0).getContext("2d");
+  if (!ctx) {
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:absolute;visibility:hidden;pointer-events:none";
+    document.body.appendChild(canvas);
+    ctx = canvas.getContext("2d");
+  }
   const text = container.textContent.trim();
   const words = text.split(/\s+/);
   if (!words.length) return;

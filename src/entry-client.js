@@ -5,6 +5,7 @@ import { splitLines } from "./assets/text-split.js";
 import { on } from "./assets/lifecycle.js";
 import { track, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
+import { hydrateForm, schemas } from "./assets/form.js";
 
 import "./assets/media.js";
 import "./assets/grid.js";
@@ -36,11 +37,23 @@ on("page:before-insert", ({ path, el }) => {
   ready();
 });
 
-splitLines([...document.querySelectorAll(".lines")]);
+document.fonts.ready.then(() => {
+  const els = [...document.querySelectorAll(".lines")];
+  splitLines(els);
+  document.querySelectorAll(".line-inner").forEach((el, i) => {
+    setTimeout(() => el.classList.add("on"), i * 20);
+  });
+});
 
 on("page:mount", () => {
   splitLines([...document.querySelectorAll(".page .lines")]);
   document.querySelectorAll(".line-inner").forEach((el, i) => {
     setTimeout(() => el.classList.add("on"), i * 20);
   });
+
+  for (const el of document.querySelectorAll("[data-form]")) {
+    const schema = schemas[el.dataset.form]
+    if (!schema) { console.warn(`[form] no schema found for "${el.dataset.form}"`); continue }
+    hydrateForm(el, schema);
+  }
 });

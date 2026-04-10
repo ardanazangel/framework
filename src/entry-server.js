@@ -1,9 +1,20 @@
 import home from "./pages/home.html?raw";
 import about from "./pages/about.html?raw";
+import contact from "./pages/contact.html?raw";
 import layout from "./layout.html?raw";
 
 import { splitText } from "./assets/text-split.js";
 import { projects } from "./data/projects.js";
+import { renderForm, schemas, validate } from "./assets/form.js";
+export { schemas, validate };
+
+function injectForms(html) {
+  return html.replace(/(<form[^>]*\sdata-form="([^"]+)"[^>]*>)[\s\S]*?(<\/form>)/g, (_, open, name, close) => {
+    const schema = schemas[name]
+    if (!schema) { console.warn(`[form] no schema found for "${name}"`); return _ }
+    return `${open}\n${renderForm(schema)}\n${close}`
+  })
+}
 
 const projectPage = (p) => /*html*/ `
 <div class="project">
@@ -17,12 +28,13 @@ const projectPage = (p) => /*html*/ `
 const routes = {
   "/": { html: home, title: "Home", prefetch: true },
   "/about": { html: about, title: "About", prefetch: true },
+  "/contact": { html: contact, title: "Contact" },
 };
 
 const processedRoutes = Object.fromEntries(
   Object.entries(routes).map(([url, { html, title, prefetch }]) => [
     url,
-    { body: splitText(html), title, ...(prefetch && { prefetch }) },
+    { body: splitText(injectForms(html)), title, ...(prefetch && { prefetch }) },
   ]),
 );
 

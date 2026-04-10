@@ -11,7 +11,7 @@ Minimal SSR/SPA hybrid built on Vite. Node dev server, Bun prod server, streamin
 | Renderer | `entry-server.js` → NDJSON stream (body first, cache second) |
 | Router | SPA client router, prefetch on hover, CSS transitions, page cache |
 | Scroll | Lenis smooth scroll (desktop only, lerp 0.09) |
-| Text | `splitText` server-side (words/chars), `splitLines` client-side via OffscreenCanvas |
+| Text | `splitText` server-side (words/chars), `splitLines` client-side via on-screen Canvas |
 | Media | IntersectionObserver lazy fade-in for `img/video[loading="lazy"]` |
 | Grid | `<grid-layout count="12">` web component, toggle with `Shift+G` |
 | Lifecycle | `emit(name, detail)` / `on(name, fn)` event bus |
@@ -43,11 +43,13 @@ src/
   pages/
     home.html
     about.html
+    contact.html
   assets/
     boot.js           # initial NDJSON fetch, populates DOM + cache before router starts
     router.ts         # SPA router
     lifecycle.js      # event bus
     loader.js         # asset load tracker, progress counter, trackPromise API
+    form.js           # schemas, renderForm (server), hydrateForm (client), validate (shared)
     scroll.js         # Lenis wrapper
     text-split.js     # splitText / splitLines
     media.js          # lazy load observer
@@ -160,13 +162,22 @@ on("lenis:scroll", ({ scroll, velocity }) => { ... });
 - `class="words"` → wraps each word in `<span class="word"><span class="word-inner">`
 - `class="chars"` → wraps each char in `<span class="char"><span class="char-inner">`
 
-**Client-side** (`splitLines`) — uses OffscreenCanvas to measure real line breaks:
+**Client-side** (`splitLines`) — uses an on-screen hidden `<canvas>` to measure real line breaks (on-screen canvas inherits `@font-face` declarations; `OffscreenCanvas` does not):
 - `class="lines"` → call `splitLines([...document.querySelectorAll('.lines')])`
 - Outputs `<span class="line"><span class="line-inner">` per line
 - `line-inner` starts at `translateY(150%)`, add class `on` to animate in
+- On full reload, waits for `document.fonts.ready` before splitting to ensure custom fonts are loaded
 
 ```js
-// animate lines in after mount
+// full reload — wait for fonts then split + animate
+document.fonts.ready.then(() => {
+  splitLines([...document.querySelectorAll(".lines")]);
+  document.querySelectorAll(".line-inner").forEach((el, i) => {
+    setTimeout(() => el.classList.add("on"), i * 20);
+  });
+});
+
+// client-side navigation
 on("page:mount", () => {
   splitLines([...document.querySelectorAll(".page .lines")]);
   document.querySelectorAll(".line-inner").forEach((el, i) => {
@@ -181,6 +192,71 @@ on("page:mount", () => {
 
 ```html
 <img src="..." loading="lazy" width="800" height="600">
+```
+
+## Forms
+
+Schemas defined in `src/assets/form.js`. Each schema maps to a `POST /api/:name` endpoint auto-registered at server startup, and to a `<form data-form="name">` in any page template.
+
+**Adding a form:**
+
+1. Add a schema to `form.js`:
+
+```js
+export const schemas = {
+  contact: {
+    action: '/api/contact',
+    fields: [
+      { name: 'name',    type: 'text',     label: 'Name',    required: true },
+      { name: 'email',   type: 'email',    label: 'Email',   required: true },
+      { name: 'message', type: 'textarea', label: 'Message', required: true, minLength: 10 },
+    ],
+  },
+  login: {
+    action: '/api/login',
+    fields: [
+      { name: 'email',    type: 'email',    label: 'Email',    required: true },
+      { name: 'password', type: 'password', label: 'Password', required: true, minLength: 8 },
+    ],
+  },
+  search: {
+    action: '/api/search',
+    fields: [
+      { name: 'query', type: 'text', label: 'Search', required: true },
+    ],
+  },
+}
+```
+
+2. Put `<form data-form="name">` in a page template — fields are injected server-side automatically:
+
+```html
+<form data-form="contact" class="form" novalidate></form>
+```
+
+That's it. The server renders the fields, the client hydrates validation and submit on `page:mount`.
+
+**Validation** — runs on both sides from the same `validate` function in `form.js`:
+- Client: inline errors per field, cleared on input
+- Server: 400 + `{ errors }` if invalid, 200 + `{ ok: true }` if ok
+
+**Field types:** `text`, `email`, `password`, `textarea`. Rules: `required`, `minLength`.
+
+**Lifecycle events:**
+
+| Event | Detail |
+|---|---|
+| `form:submit` | `{ action, body }` |
+| `form:success` | `{ action }` |
+| `form:error` | `{ action, error }` |
+
+**Handling submissions** — add logic after the `console.log` in `server.js`:
+
+```js
+// TODO: handle validated data (send email, save to db, etc.)
+console.log(`[form:${name}]`, body)
+res.writeHead(200, { 'Content-Type': 'application/json' })
+res.end(JSON.stringify({ ok: true }))
 ```
 
 ## Grid overlay

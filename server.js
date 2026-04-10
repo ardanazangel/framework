@@ -80,6 +80,49 @@ createServer(async (req, res) => {
   // in production, static assets (including pre-generated render.json) take priority
   if (isProduction && await serveStatic(req, res)) return
 
+  if (req.method === 'POST' && url.pathname.startsWith('/api/')) {
+    const name = url.pathname.slice(5) // strip /api/
+    const { schemas, validate } = await getModule()
+    const schema = schemas[name]
+
+    if (!schema) {
+      res.writeHead(404).end('Not found')
+      return
+    }
+
+    let body
+    try {
+      const raw = await new Promise((resolve, reject) => {
+        let data = ''
+        req.on('data', chunk => data += chunk)
+        req.on('end', () => resolve(data))
+        req.on('error', reject)
+      })
+      body = JSON.parse(raw)
+    } catch {
+      res.writeHead(400).end('Invalid JSON')
+      return
+    }
+
+    const errors = {}
+    for (const field of schema.fields) {
+      const error = validate(field, body[field.name] ?? '')
+      if (error) errors[field.name] = error
+    }
+
+    if (Object.keys(errors).length) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ errors }))
+      return
+    }
+
+    // TODO: handle validated data (send email, save to db, etc.)
+    console.log(`[form:${name}]`, body)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ ok: true }))
+    return
+  }
+
   if (url.searchParams.has('render')) {
     const { render, renderAll, layout } = await getModule()
     const page = render(url.pathname)
