@@ -219,44 +219,8 @@
     <main id="_root"></main>
     <script>
       const el = document.getElementById('loader');
-      window.dispatchEvent(new CustomEvent('loader:start'));
-
-      let pool = { total: 0, settled: 0, ready: false };
-
-      function complete() {
-        el.textContent = '100';
-        setTimeout(() => {
-          el.style.opacity = 0;
-          window.dispatchEvent(new CustomEvent('loader:complete'));
-        }, 200);
-      }
-
-      function settle() {
-        el.textContent = Math.round(++pool.settled / pool.total * 100);
-        if (pool.ready && pool.settled === pool.total) complete();
-      }
-
-      window.addEventListener('loader:start', () => {
-        pool = { total: 0, settled: 0, ready: false };
-        el.textContent = '0';
-        el.style.opacity = 1;
-      });
-
-      window.addEventListener('loader:track', ({ detail: srcs }) => {
-        if (!srcs.length) return;
-        pool.total += srcs.length;
-        for (const src of srcs) {
-          const p = new Image();
-          p.src = src;
-          if (p.complete) { settle(); continue; }
-          p.onload = p.onerror = settle;
-        }
-      });
-
-      window.addEventListener('loader:ready', () => {
-        pool.ready = true;
-        if (pool.total === 0 || pool.settled === pool.total) complete();
-      });
+      el.textContent = '0';
+      el.style.opacity = 1;
     </script>
     <script type="module" src="/src/entry-client.js"></script>
   </body>

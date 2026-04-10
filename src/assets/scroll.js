@@ -10,7 +10,7 @@ lenis.on('scroll', ({ scroll, velocity, direction, progress }) => {
   scrollState.velocity = velocity
   scrollState.direction = direction
   scrollState.progress = progress
-  emit('scroll', scrollState)
+  emit('lenis:scroll', scrollState)
 })
 
 document.addEventListener('keydown', (e) => {

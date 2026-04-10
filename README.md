@@ -85,7 +85,7 @@ Inline script in `index.html`. Tracks image loading for each page, shows a numer
 1. `loader:start` dispatched → counter appears at `0`
 2. All `img[src]` inside `#_root` (or new page element) are tracked via proxy `Image` objects
 3. Each load/error increments the counter
-4. On 100%, waits 2000ms then hides and dispatches `loader:complete`
+4. On 100%, waits 200ms then hides and dispatches `loader:complete`
 
 **Listen for completion:**
 ```js
@@ -94,17 +94,30 @@ window.addEventListener('loader:complete', () => {
 });
 ```
 
-**Preloading other pages** — edit `src/assets/preload.js` and add the routes you want preloaded. Their images are fetched and tracked by the loader before it completes.
+**Tracking arbitrary assets** — use `trackPromise` for GLBs, audio, or any async load. Pass the actual loading promise to avoid double-downloading:
 
 ```js
-// src/assets/preload.js
-const paths = [
-  '/nike',
-  '/sony',
-];
+import { trackPromise } from './assets/loader.js';
+
+trackPromise(gltfLoader.loadAsync('/model.glb'));
+trackPromise(fetch('/data.json'), audioCtx.decodeAudioData(buf));
 ```
 
-Already imported in `entry-client.js` — no extra setup needed.
+Accepts multiple promises in one call. If any rejects, the loader still progresses.
+
+**Preloading other pages** — add `prefetch: true` to a route in `entry-server.js` or a project in `data/projects.js`. Their images are tracked by the loader before it completes.
+
+```js
+// entry-server.js
+const routes = {
+  "/about": { html: about, title: "About", prefetch: true },
+};
+
+// data/projects.js
+{ slug: "nike", title: "Nike", prefetch: true, imgs: [...] }
+```
+
+Prefetch data comes from the second NDJSON line already fetched on boot — no extra requests.
 
 > `on('loader:complete', fn)` won't work — the event is dispatched from inline script via `window.dispatchEvent`, not through the lifecycle `emit`. Use `window.addEventListener` directly.
 
@@ -119,13 +132,13 @@ All events go through `emit` / `on` from `lifecycle.js`, and are also dispatched
 | `page:before-insert` | `{ path, el }` | new page element built, before DOM insert |
 | `page:mount` | `{ path }` | new page visible, old page removed |
 | `page:destroy` | `{ path }` | old page just removed |
-| `scroll` | `{ scroll, velocity, direction, progress }` | every Lenis scroll tick |
+| `lenis:scroll` | `{ scroll, velocity, direction, progress }` | every Lenis scroll tick |
 
 ```js
 import { on } from "./assets/lifecycle.js";
 
 on("page:mount", ({ path }) => { ... });
-on("scroll", ({ scroll, velocity }) => { ... });
+on("lenis:scroll", ({ scroll, velocity }) => { ... });
 ```
 
 ## Router

@@ -131,7 +131,7 @@ export function addToCache(data: PageCache) {
 }
 
 export function initRouter(preloaded: PageCache = {}) {
-  pages = preloaded;
+  Object.assign(pages, preloaded);
   wrapInPage();
   setTimeout(() => dispatch("page:mount", { path: location.pathname }));
 

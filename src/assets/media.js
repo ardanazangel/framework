@@ -11,15 +11,18 @@ function init() {
         if (!entry.isIntersecting) return;
         const el = entry.target;
         observer.unobserve(el);
-        if (el.complete) {
+        const isVideo = el.tagName === 'VIDEO';
+        const isReady = isVideo ? el.readyState >= 2 : el.complete;
+        if (isReady) {
           el.classList.add("loaded");
         } else {
-          el.addEventListener("load", () => el.classList.add("loaded"), { once: true });
+          const evt = isVideo ? "loadeddata" : "load";
+          el.addEventListener(evt, () => el.classList.add("loaded"), { once: true });
           el.addEventListener("error", () => el.classList.add("loaded"), { once: true });
         }
       });
     },
-    { rootMargin: "0px 0px 200px 0px", threshold: 0 }
+    { rootMargin: "0px 0px 50px 0px", threshold: 0 }
   );
 
   elements.forEach((el) => observer.observe(el));

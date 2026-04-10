@@ -60,6 +60,7 @@ var projects = [
 		slug: "nike",
 		title: "Nike",
 		year: 2024,
+		prefetch: true,
 		imgs: [
 			"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=2400",
 			"https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=2400",
@@ -72,6 +73,7 @@ var projects = [
 		slug: "sony",
 		title: "Sony",
 		year: 2023,
+		prefetch: true,
 		imgs: [
 			"https://images.unsplash.com/photo-1588508065123-287b28e013da?w=2400",
 			"https://images.unsplash.com/photo-1484704849700-f032a568e944?w=2400",
@@ -85,6 +87,7 @@ var projects = [
 		slug: "apple",
 		title: "Apple",
 		year: 2022,
+		prefetch: true,
 		imgs: [
 			"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=2400",
 			"https://images.unsplash.com/photo-1569770218135-bea267ed7e84?w=2400",
@@ -101,24 +104,29 @@ var projectPage = (p) => `
   <h1 class="chars">${p.title}</h1>
   <p>${p.year}</p>
   ${p.imgs.map((src) => `<img src="${src}" width="2400" height="1600" loading="lazy">`).join("\n  ")}
+  <video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" width="1920" height="1080" loop loading="lazy" muted playsinline controls></video>
   <a href="/">← Back</a>
 </div>`;
 var processedRoutes = Object.fromEntries(Object.entries({
 	"/": {
 		html: home_default,
-		title: "Home"
+		title: "Home",
+		prefetch: true
 	},
 	"/about": {
 		html: about_default,
-		title: "About"
+		title: "About",
+		prefetch: true
 	}
-}).map(([url, { html, title }]) => [url, {
+}).map(([url, { html, title, prefetch }]) => [url, {
 	body: splitText(html),
-	title
+	title,
+	...prefetch && { prefetch }
 }]));
 for (const p of projects) processedRoutes[`/${p.slug}`] = {
 	body: splitText(projectPage(p)),
-	title: p.title
+	title: p.title,
+	...p.prefetch && { prefetch: true }
 };
 function render(url) {
 	return processedRoutes[url] ?? {
