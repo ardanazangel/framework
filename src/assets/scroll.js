@@ -1,7 +1,7 @@
 import { Lenis } from "./lenis/lenis.ts"
 import { emit } from "./lifecycle.js"
 
-const lenis = new Lenis({ autoRaf: true, lerp: 0.09 })
+export const lenis = new Lenis({ autoRaf: true, lerp: 0.09 })
 
 const scrollState = { scroll: 0, velocity: 0, direction: 0, progress: 0 }
 
@@ -13,7 +13,7 @@ lenis.on('scroll', ({ scroll, velocity, direction, progress }) => {
   emit('lenis:scroll', scrollState)
 })
 
-document.addEventListener('keydown', (e) => {
+function handleKeydown(e) {
   if (e.target.closest('input, textarea, select')) return
 
   let delta = 0
@@ -24,4 +24,9 @@ document.addEventListener('keydown', (e) => {
 
   e.preventDefault()
   lenis.scrollTo(lenis.scroll + delta)
-})
+}
+
+export const scroll = {
+  on()  { document.addEventListener('keydown', handleKeydown) },
+  off() { document.removeEventListener('keydown', handleKeydown) },
+}

@@ -7,3 +7,8 @@ export const emit = (name, detail) => {
 
 export const on = (name, fn) =>
   (listeners[name] ??= []).push(fn)
+
+export const off = (name, fn) => {
+  if (!listeners[name]) return
+  listeners[name] = listeners[name].filter(f => f !== fn)
+}
