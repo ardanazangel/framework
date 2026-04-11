@@ -24,22 +24,81 @@ export const schemas = {
       { name: 'query', type: 'text', label: 'Search', required: true },
     ],
   },
+  signup: {
+    action: '/api/signup',
+    fields: [
+      { name: 'email', type: 'email', label: 'Email', required: true },
+      { name: 'password', type: 'password', label: 'Password', required: true, minLength: 8 },
+      { name: 'confirmPassword', type: 'password', label: 'Confirm Password', required: true, minLength: 8, match: 'password' },
+      { name: 'agreeTerms', type: 'checkbox', label: 'I agree to the terms and conditions', required: true },
+    ],
+  },
+  newsletter: {
+    action: '/api/newsletter',
+    fields: [
+      { name: 'email', type: 'email', label: 'Email', required: true },
+      { name: 'frequency', type: 'select', label: 'Frequency', required: true, options: [
+        { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'monthly', label: 'Monthly' },
+      ]},
+    ],
+  },
+  profile: {
+    action: '/api/profile',
+    fields: [
+      { name: 'fullName', type: 'text', label: 'Full Name', required: true },
+      { name: 'email', type: 'email', label: 'Email', required: true },
+      { name: 'phone', type: 'tel', label: 'Phone', pattern: '^[\\d\\s+\\-()]+$' },
+      { name: 'bio', type: 'textarea', label: 'Bio', maxLength: 500 },
+    ],
+  },
+  feedback: {
+    action: '/api/feedback',
+    fields: [
+      { name: 'rating', type: 'select', label: 'Rating', required: true, options: [
+        { value: '5', label: '5 - Excellent' },
+        { value: '4', label: '4 - Good' },
+        { value: '3', label: '3 - Average' },
+        { value: '2', label: '2 - Poor' },
+        { value: '1', label: '1 - Very Poor' },
+      ]},
+      { name: 'category', type: 'select', label: 'Category', required: true, options: [
+        { value: 'bug', label: 'Bug Report' },
+        { value: 'feature', label: 'Feature Request' },
+        { value: 'general', label: 'General Feedback' },
+      ]},
+      { name: 'comment', type: 'textarea', label: 'Comment', required: true, minLength: 10, maxLength: 1000 },
+    ],
+  },
 }
 
 // --- server-side ---
 
-function renderField(field) {
-  const { name, type, label, required, minLength } = field
+export function renderField(field) {
+  const { name, type, label, required, minLength, maxLength, min, max, pattern, options } = field
   const attrs = [
     `name="${name}"`,
     `id="field-${name}"`,
     required ? 'required' : '',
     minLength ? `minlength="${minLength}"` : '',
+    maxLength ? `maxlength="${maxLength}"` : '',
+    min != null ? `min="${min}"` : '',
+    max != null ? `max="${max}"` : '',
+    pattern ? `pattern="${pattern}"` : '',
   ].filter(Boolean).join(' ')
 
-  const input = type === 'textarea'
-    ? `<textarea ${attrs}></textarea>`
-    : `<input type="${type}" ${attrs}>`
+  let input
+  if (type === 'textarea') {
+    input = `<textarea ${attrs}></textarea>`
+  } else if (type === 'select') {
+    const optionsHtml = (options ?? []).map(o => `<option value="${o.value}">${o.label}</option>`).join('')
+    input = `<select ${attrs}><option value="">— Select —</option>${optionsHtml}</select>`
+  } else if (type === 'checkbox') {
+    input = `<input type="checkbox" name="${name}" id="field-${name}" value="on"${required ? ' required' : ''}>`
+  } else {
+    input = `<input type="${type}" ${attrs}>`
+  }
 
   return `<div class="form-field" data-name="${name}">
   <label for="field-${name}">${label}</label>
@@ -57,12 +116,23 @@ export function renderForm(schema) {
 
 // --- validation (shared server + client) ---
 
-export function validate(field, value) {
+export function validate(field, value, allValues = {}) {
   if (field.required && !value.trim()) return `${field.label} is required`
-  if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+  if (!value) return null
+  if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
     return 'Enter a valid email'
   if (field.minLength && value.length < field.minLength)
     return `Minimum ${field.minLength} characters`
+  if (field.maxLength && value.length > field.maxLength)
+    return `Maximum ${field.maxLength} characters`
+  if (field.pattern && !new RegExp(field.pattern).test(value))
+    return `${field.label} format is invalid`
+  if (field.min != null && Number(value) < field.min)
+    return `Minimum value is ${field.min}`
+  if (field.max != null && Number(value) > field.max)
+    return `Maximum value is ${field.max}`
+  if (field.match && allValues[field.match] !== value)
+    return `${field.label} does not match`
   return null
 }
 
@@ -91,16 +161,19 @@ export function hydrateForm(formEl, schema) {
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault()
 
-    // validate
-    let hasErrors = false
+    // collect values first (needed for match validation)
     const body = {}
     for (const field of schema.fields) {
       const el = formEl.querySelector(`[name="${field.name}"]`)
-      const value = el?.value ?? ''
-      const error = validate(field, value)
+      body[field.name] = field.type === 'checkbox' ? (el?.checked ? 'on' : '') : (el?.value ?? '')
+    }
+
+    // validate
+    let hasErrors = false
+    for (const field of schema.fields) {
+      const error = validate(field, body[field.name], body)
       setError(field.name, error)
-      if (error) hasErrors = true
-      else body[field.name] = value
+      if (error) { hasErrors = true; delete body[field.name] }
     }
     if (hasErrors) return
 
