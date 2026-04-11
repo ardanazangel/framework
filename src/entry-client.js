@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { initRouter } from "./assets/router.ts";
-import { splitLines } from "./assets/text-split.js";
+import { splitLines } from "./assets/split-lines.js";
 import { on } from "./assets/lifecycle.js";
 import { track, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
