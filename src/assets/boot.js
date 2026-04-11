@@ -22,7 +22,16 @@ export function streamLines(response) {
 }
 
 export async function boot() {
-  const res = await fetch(location.pathname + '?render')
+  // SSG: si existe render.json, usar datos pregenerados
+  let res
+  try {
+    const json = await fetch('/render.json').then(r => r.ok ? r.json() : null)
+    if (json?.[location.pathname]) {
+      const text = json[location.pathname]
+      res = new Response(text, { headers: { 'content-type': 'application/x-ndjson' } })
+    }
+  } catch {}
+  res ??= await fetch(location.pathname + '?render')
   const read = streamLines(res)
 
   // line 1: current page + layout

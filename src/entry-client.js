@@ -9,7 +9,7 @@ import { media } from "./assets/media.js";
 import { sound } from "./assets/sound.js";
 import { lines } from "./assets/lines.js";
 import { form } from "./assets/form.js";
-import { about } from "./assets/pages/about.js";
+import { home } from "./assets/pages/home.js";
 
 import "./assets/grid.js";
 
@@ -31,7 +31,7 @@ initRouter({
   ...cache,
 });
 
-const pageModules = { '/about': about };
+const pageModules = { '/': home };
 
 hooks.beforeInsert = ({ path, el }) => {
   if (prefetched.has(path)) { ready(); return; }
@@ -53,6 +53,5 @@ hooks.mount = ({ path }) => {
   if (pm) { pm.init(); pm.on(); }
 };
 
-// init state + modules on first load
-state.route.current = location.pathname;
-modules.forEach(m => m.on());
+// primer mount — funciona con o sin router
+requestAnimationFrame(() => hooks.mount?.({ path: location.pathname }))

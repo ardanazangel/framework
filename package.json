@@ -10,7 +10,9 @@
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.js",
     "prerender": "pnpm build:server && node server.js --prerender",
     "preview": "pnpm build:client && pnpm build:server && NODE_ENV=production node server.js",
-    "preview:static": "pnpm build:client && pnpm prerender && NODE_ENV=production node server.js"
+    "preview:static": "pnpm build:client && pnpm prerender && NODE_ENV=production node server.js",
+    "build:ssg": "pnpm build:client && pnpm build:server && node server.js --ssg",
+    "preview:ssg": "pnpm build:ssg && vite preview"
   },
   "devDependencies": {
     "vite": "^8.0.1"

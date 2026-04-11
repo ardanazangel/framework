@@ -5,6 +5,46 @@ import { createGzip } from 'node:zlib'
 import path from 'node:path'
 
 const isProduction = process.env.NODE_ENV === 'production'
+const isSSG = process.argv.includes('--ssg')
+
+if (isSSG) {
+  const { render, renderAll, layout } = await import('./dist/server/entry-server.js')
+  const all = renderAll()
+  const routes = Object.keys(all)
+
+  const distAssets = await fs.readdir('./dist/assets')
+  const cssFiles = distAssets.filter(f => f.endsWith('.css'))
+  const fonts = (await fs.readdir('./dist')).filter(f => f.endsWith('.woff2'))
+  const preloads = [
+    ...fonts.map(f => `<link rel="preload" href="/${f}" as="font" type="font/woff2" crossorigin>`),
+    ...cssFiles.map(f => `<link rel="preload" href="/assets/${f}" as="style" crossorigin>`),
+  ].join('\n    ')
+
+  const renderJson = {}
+  for (const route of routes) {
+    const page = render(route)
+    renderJson[route] = JSON.stringify({ body: page.body, title: page.title, layout }) + '\n'
+      + JSON.stringify({ cache: all }) + '\n'
+  }
+  await fs.writeFile('./dist/render.json', JSON.stringify(renderJson))
+  console.log('  ✓ dist/render.json')
+
+  const indexHtml = await fs.readFile('./dist/index.html', 'utf-8')
+  for (const route of routes) {
+    const page = render(route)
+    const html = indexHtml
+      .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n  </head>`)
+      .replace('<main id="_root"></main>', `${layout}<main id="_root">${page.body}</main>`)
+    const dir = path.join('./dist', route === '/' ? '' : route)
+    await fs.mkdir(dir, { recursive: true })
+    await fs.writeFile(path.join(dir, 'index.html'), html)
+    console.log(`  ✓ ${route}`)
+  }
+  // limpiar dist/server — no necesario en SSG
+  await fs.rm('./dist/server', { recursive: true, force: true })
+  console.log(`\n${routes.length} páginas + render.json generados`)
+  process.exit(0)
+}
 const port = process.env.PORT || 5173
 const base = process.env.BASE || '/'
 

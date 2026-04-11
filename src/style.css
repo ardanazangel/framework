@@ -1,44 +1,38 @@
 #home-wrapper {
-  padding-left: 11.8em;
+  padding-left: calc(var(--vw) * 188);
   display: flex;
   align-items: center;
   height: 100vh;
 
   h1 {
-    font-size: 16em;
+    font-size: calc(var(--vw) * 256);
     font-weight: 400;
     line-height: 0.8;
 
     span:last-child {
-      padding-left: 1.25em;
+      padding-left: calc(var(--vw) * 20);
     }
   }
 }
 
 nav {
   position: fixed;
-  padding: 2em;
+  padding: calc(var(--vw) * 32);
   z-index: 10;
   right: 0;
   display: flex;
-  gap: 2em;
-}
-
-a {
-  font-size: 1.5em;
-  line-height: 0.7;
+  gap: calc(var(--vw) * 32);
 }
 
 .paragraph {
-  margin-top: 7em;
-  margin-left: 8em;
-  width: 10em;
-  width: 18.4em;
+  margin-top: calc(var(--vw) * 112);
+  margin-left: calc(var(--vw) * 128);
+  width: calc(var(--vw) * 294);
 }
 
-p{
+p {
   font-family: "nmr";
-  font-size: 1.5em;
+  font-size: calc(var(--vw) * 24);
 }
 
 .progress-bar {

@@ -1,68 +1,47 @@
-class GridLayout extends HTMLElement {
-  static observedAttributes = ['count']
-
-  constructor() {
-    super()
-    this.attachShadow({ mode: 'open' })
+const style = document.createElement('style')
+style.textContent = /*css*/`
+  #grid-overlay {
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    padding: calc(var(--vw) * 32);
+    gap: calc(var(--vw) * 16);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
-
-  connectedCallback() {
-    this.render()
+  #grid-overlay.on {
+    opacity: 1;
   }
-
-  attributeChangedCallback() {
-    this.render()
+  #grid-overlay > div {
+    flex: 1;
+    height: 100%;
+    background: red;
+    opacity: 0.1;
   }
+`
+document.head.appendChild(style)
 
-  render() {
-    const count = parseInt(this.getAttribute('count')) || 0
+let overlay = null
 
-    const wrap = document.createElement('div')
-    wrap.className = 'grid-wrapper'
-    for (let i = 0; i < count; i++) {
-      const col = document.createElement('div')
-      col.className = 'grid-column'
-      wrap.append(col)
-    }
-
-    const style = document.createElement('style')
-    style.textContent = /*css*/`
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        pointer-events: none;
-      }
-      .grid-wrapper {
-        display: flex;
-        position: fixed;
-        z-index: 100;
-        width: 100vw;
-        height: 100vh;
-        gap: 1em;
-        padding: 2em;
-        transition: opacity 0.2s ease;
-        opacity: 0;
-      }
-      .grid-column {
-        background: red;
-        opacity: 0.1;
-        width: 100%;
-      }
-    `
-
-    this.shadowRoot.innerHTML = ''
-    this.shadowRoot.append(style, wrap)
+function addGrid(cols = 12) {
+  overlay = document.createElement('div')
+  overlay.id = 'grid-overlay'
+  for (let i = 0; i < cols; i++) {
+    overlay.appendChild(document.createElement('div'))
   }
+  document.body.prepend(overlay)
 }
 
-customElements.define('grid-layout', GridLayout)
+function toggleGrid() {
+  if (!overlay) addGrid()
+  overlay.classList.toggle('on')
+}
 
 document.addEventListener('keydown', (e) => {
-  if (e.shiftKey && e.key === 'G') {
-    document.querySelectorAll('grid-layout').forEach((el) => {
-      const wrap = el.shadowRoot.querySelector('.grid-wrapper')
-      wrap.style.opacity = wrap.style.opacity === '1' ? '0' : '1'
-    })
-  }
+  if (e.shiftKey && e.key === 'G') toggleGrid()
 })
