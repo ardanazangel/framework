@@ -136,6 +136,17 @@ export function validate(field, value, allValues = {}) {
   return null
 }
 
+export const form = {
+  on() {
+    for (const el of document.querySelectorAll('[data-form]')) {
+      const schema = schemas[el.dataset.form]
+      if (!schema) { console.warn(`[form] no schema found for "${el.dataset.form}"`); continue }
+      hydrateForm(el, schema)
+    }
+  },
+  off() {},
+}
+
 export function hydrateForm(formEl, schema) {
   if (!formEl) return
 
