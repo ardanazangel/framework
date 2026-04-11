@@ -1,5 +1,4 @@
 import { Lenis } from "./lenis/lenis.ts"
-import { emit } from "./lifecycle.js"
 
 export const lenis = new Lenis({ autoRaf: true, lerp: 0.09 })
 
@@ -10,7 +9,7 @@ lenis.on('scroll', ({ scroll, velocity, direction, progress }) => {
   scrollState.velocity = velocity
   scrollState.direction = direction
   scrollState.progress = progress
-  emit('lenis:scroll', scrollState)
+  window.dispatchEvent(new CustomEvent('lenis:scroll', { detail: scrollState }))
 })
 
 function handleKeydown(e) {

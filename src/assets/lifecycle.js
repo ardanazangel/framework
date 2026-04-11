@@ -1,14 +1,7 @@
-const listeners = {}
-
-export const emit = (name, detail) => {
-  listeners[name]?.forEach(fn => fn(detail))
-  window.dispatchEvent(new CustomEvent(name, { detail }))
-}
-
-export const on = (name, fn) =>
-  (listeners[name] ??= []).push(fn)
-
-export const off = (name, fn) => {
-  if (!listeners[name]) return
-  listeners[name] = listeners[name].filter(f => f !== fn)
+// Hooks de lifecycle — callbacks directos, sin pub/sub.
+// El router los llama, entry-client.js los asigna.
+export const hooks = {
+  beforeInsert: null, // ({ path, el }) => void
+  mount:        null, // ({ path })      => void
+  destroy:      null, // ({ path })      => void
 }

@@ -11,7 +11,8 @@ style.textContent = /* css */`
 `;
 document.head.appendChild(style);
 
-import { emit as dispatch } from "./lifecycle.js";
+import { hooks } from "./lifecycle.js";
+import { streamLines } from "./stream.js";
 
 const getPage = () => document.querySelector<HTMLElement>(".page")!;
 
@@ -34,37 +35,21 @@ let pages: PageCache = {};
 async function fetchPage(path: string): Promise<PageData> {
   if (pages[path]) return pages[path];
   const res = await fetch(path + "?render");
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let buf = "";
+  const read = streamLines(res);
 
-  const readChunk = async (): Promise<PageData> => {
-    const { value, done } = await reader.read();
-    buf += decoder.decode(value ?? new Uint8Array(), { stream: !done });
-    const nl = buf.indexOf("\n");
-    if (nl === -1 && !done) return readChunk();
-    const line = buf.slice(0, nl === -1 ? buf.length : nl);
-    buf = nl === -1 ? "" : buf.slice(nl + 1);
-    const page: PageData = JSON.parse(line);
-    pages[path] = page;
-    // read cache in background
-    if (!done) readRemaining();
-    return page;
-  };
+  // line 1: page data
+  const { line, read: next } = await read();
+  const page: PageData = JSON.parse(line);
+  pages[path] = page;
 
-  const readRemaining = async () => {
-    const { value, done } = await reader.read();
-    buf += decoder.decode(value ?? new Uint8Array(), { stream: !done });
-    const nl = buf.indexOf("\n");
-    if (nl === -1 && !done) return readRemaining();
-    const line = buf.slice(0, nl === -1 ? buf.length : nl);
-    if (line) {
-      const { cache }: { cache: PageCache } = JSON.parse(line);
-      Object.assign(pages, cache);
-    }
-  };
+  // line 2: cache — read in background
+  next().then(({ line }) => {
+    if (!line) return;
+    const { cache }: { cache: PageCache } = JSON.parse(line);
+    Object.assign(pages, cache);
+  });
 
-  return readChunk();
+  return page;
 }
 
 let navigating = false;
@@ -72,12 +57,12 @@ let navigating = false;
 async function navigate(path: string, push = true) {
   if (navigating) return;
   navigating = true;
-  dispatch("loader:start", null);
+  window.dispatchEvent(new CustomEvent("loader:start"));
 
   // Timeout de 15 segundos máximo para evitar que el loader se quede visible
   const loaderTimeout = setTimeout(() => {
     console.warn(`Navigation timeout for path: ${path}`);
-    dispatch("loader:complete", null);
+    window.dispatchEvent(new CustomEvent("loader:complete"));
   }, 15000);
 
   let page: PageData;
@@ -87,7 +72,7 @@ async function navigate(path: string, push = true) {
   catch (err) { 
     console.error("Navigation failed:", err);
     clearTimeout(loaderTimeout);
-    dispatch("loader:complete", null);
+    window.dispatchEvent(new CustomEvent("loader:complete"));
     navigating = false;
     return; 
   }
@@ -97,7 +82,7 @@ async function navigate(path: string, push = true) {
   newPage.className = "page page-in";
   newPage.innerHTML = page.body;
   const loaderDone = waitForLoader();
-  dispatch("page:before-insert", { path, el: newPage });
+  hooks.beforeInsert?.({ path, el: newPage });
 
   await loaderDone;
   clearTimeout(loaderTimeout);
@@ -118,11 +103,11 @@ async function navigate(path: string, push = true) {
   scrollTo(0, 0);
 
   await waitForAnimation(oldPage);
-  dispatch("page:destroy", { path: oldPath });
+  hooks.destroy?.({ path: oldPath });
   oldPage.remove();
   newPage.classList.remove("page-in");
-  dispatch("page:mount", { path: location.pathname });
-  dispatch("loader:complete", null);
+  hooks.mount?.({ path: location.pathname });
+  window.dispatchEvent(new CustomEvent("loader:complete"));
   navigating = false;
 }
 
@@ -133,7 +118,7 @@ export function addToCache(data: PageCache) {
 export function initRouter(preloaded: PageCache = {}) {
   Object.assign(pages, preloaded);
   wrapInPage();
-  setTimeout(() => dispatch("page:mount", { path: location.pathname }));
+  setTimeout(() => hooks.mount?.({ path: location.pathname }));
 
   document.addEventListener("click", (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>("a[href]");

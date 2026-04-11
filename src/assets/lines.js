@@ -1,5 +1,4 @@
 import { splitLines } from './split-lines.js'
-import { on } from './lifecycle.js'
 
 function apply(selector) {
   splitLines([...document.querySelectorAll(selector)])
@@ -8,10 +7,18 @@ function apply(selector) {
   })
 }
 
-// Primera carga — espera a que las fuentes estén listas
-document.fonts.ready.then(() => apply('.lines'))
+let fontsReady = false
 
 export const lines = {
-  on()  { apply('.page .lines') },
+  on() {
+    if (!fontsReady) {
+      document.fonts.ready.then(() => {
+        fontsReady = true
+        apply('.page .lines')
+      })
+    } else {
+      apply('.page .lines')
+    }
+  },
   off() {},
 }

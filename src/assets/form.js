@@ -1,4 +1,4 @@
-import { emit } from './lifecycle.js'
+const dispatch = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }))
 
 // --- schemas ---
 
@@ -191,7 +191,7 @@ export function hydrateForm(formEl, schema) {
     // submit
     submit.disabled = true
     setStatus('Sending...')
-    emit('form:submit', { action: schema.action, body })
+    dispatch('form:submit', { action: schema.action, body })
 
     try {
       const res = await fetch(schema.action, {
@@ -204,10 +204,10 @@ export function hydrateForm(formEl, schema) {
 
       setStatus('Sent!')
       formEl.reset()
-      emit('form:success', { action: schema.action })
+      dispatch('form:success', { action: schema.action })
     } catch (err) {
       setStatus(err.message || 'Something went wrong', true)
-      emit('form:error', { action: schema.action, error: err })
+      dispatch('form:error', { action: schema.action, error: err })
     } finally {
       submit.disabled = false
     }
