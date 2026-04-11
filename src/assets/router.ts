@@ -11,8 +11,8 @@ style.textContent = /* css */`
 `;
 document.head.appendChild(style);
 
-import { hooks } from "./lifecycle.js";
-import { streamLines } from "./stream.js";
+import { hooks } from "./app.js";
+import { streamLines } from "./boot.js";
 
 const getPage = () => document.querySelector<HTMLElement>(".page")!;
 

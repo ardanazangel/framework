@@ -1,10 +1,9 @@
 import "./style.css";
 
 import { initRouter } from "./assets/router.ts";
-import { hooks } from "./assets/lifecycle.js";
+import { hooks, state } from "./assets/app.js";
 import { track, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
-import { state } from "./assets/state.js";
 import { snif } from "./assets/snif.js";
 import { media } from "./assets/media.js";
 import { sound } from "./assets/sound.js";
