@@ -102,13 +102,14 @@ async function navigate(path: string, push = true) {
   if (push) history.pushState({}, "", path);
   scrollTo(0, 0);
 
-  await waitForAnimation(oldPage);
   hooks.destroy?.({ path: oldPath });
-  oldPage.remove();
-  newPage.classList.remove("page-in");
   hooks.mount?.({ path: location.pathname });
   window.dispatchEvent(new CustomEvent("loader:complete"));
   navigating = false;
+
+  await waitForAnimation(oldPage);
+  oldPage.remove();
+  newPage.classList.remove("page-in");
 }
 
 export function addToCache(data: PageCache) {
