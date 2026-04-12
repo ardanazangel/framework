@@ -26,9 +26,9 @@
       :root {
         --vw: calc(100vw / 1920);
 
-        --in-1: cubic-bezier(0.47, 0, 0.745, 0.715);
-        --out-1: cubic-bezier(0.39, 0.575, 0.565, 1);
-        --in-out1: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+        --i1: cubic-bezier(0.47, 0, 0.745, 0.715);
+        --o1: cubic-bezier(0.39, 0.575, 0.565, 1);
+        --io1: cubic-bezier(0.445, 0.05, 0.55, 0.95);
         --i2: cubic-bezier(0.55, 0.085, 0.68, 0.53);
         --o2: cubic-bezier(0.25, 0.46, 0.45, 0.94);
         --io2: cubic-bezier(0.455, 0.03, 0.515, 0.955);
@@ -46,12 +46,6 @@
         --io6: cubic-bezier(1, 0, 0, 1);
       }
 
-      @media (max-width: 768px) {
-        :root {
-          --vw: calc(100vw / 390);
-        }
-      }
-
       html {
         -webkit-text-size-adjust: none;
         -webkit-font-smoothing: antialiased;
@@ -63,7 +57,9 @@
         overscroll-behavior: none;
       }
 
-      html::-webkit-scrollbar { display: none; }
+      html::-webkit-scrollbar {
+        display: none;
+      }
 
       body {
         font-family: "nmb";
@@ -75,7 +71,9 @@
         isolation: isolate;
       }
 
-      button { all: unset; }
+      button {
+        all: unset;
+      }
 
       a {
         all: unset;
@@ -87,8 +85,12 @@
         cursor: pointer;
       }
 
-      a:hover { opacity: 0.9; }
-      a.active { opacity: 1; }
+      a:hover {
+        opacity: 0.9;
+      }
+      a.active {
+        opacity: 1;
+      }
 
       canvas {
         position: fixed;
@@ -124,7 +126,9 @@
         will-change: transform;
       }
 
-      span.line-inner.on { transform: translateY(0%); }
+      span.line-inner.on {
+        transform: translateY(0%);
+      }
 
       span.word-inner {
         display: inline-block;
@@ -158,6 +162,12 @@
       .progress-bar {
         transition: transform 0.4s var(--in-out-4);
       }
+
+      @media (max-width: 768px) {
+        :root {
+          --vw: calc(100vw / 390);
+        }
+      }
     </style>
   </head>
   <body>
@@ -165,8 +175,8 @@
     <grid-layout count="12"></grid-layout>
     <main id="_root"></main>
     <script>
-      const el = document.getElementById('loader');
-      el.textContent = '0';
+      const el = document.getElementById("loader");
+      el.textContent = "0";
       el.style.opacity = 1;
     </script>
     <script type="module" src="/src/entry-client.js"></script>

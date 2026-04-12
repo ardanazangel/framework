@@ -1,4 +1,8 @@
 export default {
+  oxc: {
+    jsx: { runtime: 'automatic' },
+    exclude: [/\.html/]
+  },
   plugins: [
     {
       name: 'minify-html',

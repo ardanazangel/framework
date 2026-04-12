@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { WebGPURenderer } from "three/webgpu";
+import { state } from "./app.js";
 
 async function initScene(canvas, { background = 'transparent' } = {}) {
   // escena
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
     75,
-    innerWidth / innerHeight,
+    state.win.wh,
     0.1,
     1000,
   );
@@ -20,18 +21,18 @@ async function initScene(canvas, { background = 'transparent' } = {}) {
     alpha: transparent,
   });
   await renderer.init();
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(state.win.w, state.win.h);
+  renderer.setPixelRatio(state.win.dpr);
   if (transparent) renderer.setClearColor(0x000000, 0);
   else renderer.setClearColor(background);
 
   // resize
-  const onResize = () => {
-    camera.aspect = innerWidth / innerHeight;
+  const onResize = ({ detail: win }) => {
+    camera.aspect = win.wh;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+    renderer.setSize(win.w, win.h);
   };
-  window.addEventListener("resize", onResize);
+  window.addEventListener("win:resize", onResize);
 
   // cubo
   const cube = new THREE.Mesh(
@@ -55,7 +56,7 @@ async function initScene(canvas, { background = 'transparent' } = {}) {
 
   function destroy() {
     cancelAnimationFrame(raf);
-    window.removeEventListener("resize", onResize);
+    window.removeEventListener("win:resize", onResize);
     renderer.dispose();
   }
 

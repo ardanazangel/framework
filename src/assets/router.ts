@@ -3,15 +3,15 @@ type PageCache = Record<string, PageData>;
 
 const style = document.createElement("style");
 style.textContent = /* css */`
-  @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10%) } }
+  @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10vh) } }
   @keyframes page-in  { from { clip-path: polygon(0% 100vh, 100% 100vh, 100% 100vh, 0% 100vh); } }
   .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
-  .page-out { animation: page-out 1.2s forwards var(--io4); }
-  .page-in  { animation: page-in  1.2s forwards var(--io4); z-index: 1; position: fixed; top:0; left: 0; width: 100%;}
+  .page-out { animation: page-out 1.2s forwards var(--io4); z-index: 0;}
+  .page-in  { animation: page-in  1.2s forwards var(--io4); z-index: 1; position: fixed; top: 0; left: 0; width: 100%; }
 `;
 document.head.appendChild(style);
 
-import { hooks } from "./app.js";
+import { hooks, state } from "./app.js";
 import { streamLines } from "./boot.js";
 
 const getPage = () => document.querySelector<HTMLElement>(".page")!;
@@ -40,6 +40,12 @@ async function fetchPage(path: string): Promise<PageData> {
   // line 1: page data
   const { line, read: next } = await read();
   const page: PageData = JSON.parse(line);
+
+  if (page.title === "404") {
+    location.replace("/404");
+    return new Promise(() => {}); // never resolves — la navegacion se cancela
+  }
+
   pages[path] = page;
 
   // line 2: cache — read in background
@@ -89,9 +95,11 @@ async function navigate(path: string, push = true) {
 
   const oldPath = location.pathname;
   const oldPage = getPage();
+  const currentScroll = state.scroll;
+
   Object.assign(oldPage.style, {
     position: "fixed",
-    top: `-${scrollY}px`,
+    top: `-${currentScroll}px`,
     left: "0",
     right: "0",
     width: "100%",
@@ -100,16 +108,16 @@ async function navigate(path: string, push = true) {
 
   document.querySelector("#_root")!.appendChild(newPage);
   if (push) history.pushState({}, "", path);
-  scrollTo(0, 0);
 
   hooks.destroy?.({ path: oldPath });
   hooks.mount?.({ path: location.pathname });
   window.dispatchEvent(new CustomEvent("loader:complete"));
-  navigating = false;
 
   await waitForAnimation(oldPage);
   oldPage.remove();
   newPage.classList.remove("page-in");
+  window.dispatchEvent(new CustomEvent("transition:end")); // scroll.js resetea lenis
+  navigating = false;
 }
 
 export function addToCache(data: PageCache) {

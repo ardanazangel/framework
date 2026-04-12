@@ -1,4 +1,5 @@
 import { Lenis } from "./lenis/lenis.ts"
+import { state } from "./app.js"
 
 export const lenis = new Lenis({ autoRaf: true, lerp: 0.09 })
 
@@ -9,6 +10,7 @@ lenis.on('scroll', ({ scroll, velocity, direction, progress }) => {
   scrollState.velocity = velocity
   scrollState.direction = direction
   scrollState.progress = progress
+  state.scroll = scroll
   window.dispatchEvent(new CustomEvent('lenis:scroll', { detail: scrollState }))
 })
 
@@ -24,6 +26,10 @@ function handleKeydown(e) {
   e.preventDefault()
   lenis.scrollTo(lenis.scroll + delta)
 }
+
+window.addEventListener('transition:end', () => {
+  lenis.scrollTo(0, { immediate: true })
+})
 
 export const scroll = {
   on()  { document.addEventListener('keydown', handleKeydown) },

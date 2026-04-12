@@ -1,15 +1,14 @@
 import "./style.css";
-
 import { initRouter } from "./assets/router.ts";
 import { hooks, state } from "./assets/app.js";
 import { track, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
-import { snif } from "./assets/snif.js";
 import { media } from "./assets/media.js";
 import { sound } from "./assets/sound.js";
 import { lines } from "./assets/lines.js";
 import { form } from "./assets/form.js";
 import { home } from "./assets/pages/home.js";
+import { snif } from "./assets/snif.js";
 
 import "./assets/grid.js";
 
@@ -17,7 +16,7 @@ const modules = [media, sound, lines, form];
 
 if (!snif.isMobile) {
   const { scroll } = await import("./assets/scroll.js");
-  modules.push(scroll);
+  scroll.on(); // scroll siempre activo, no se apaga en transiciones
 }
 
 const { page, cache } = await boot();
@@ -31,7 +30,7 @@ initRouter({
   ...cache,
 });
 
-const pageModules = { '/': home };
+const pageModules = { '/': home};
 
 hooks.beforeInsert = ({ path, el }) => {
   if (prefetched.has(path)) { ready(); return; }

@@ -47,7 +47,7 @@ for (const p of projects) {
 }
 
 export function render(url) {
-  return processedRoutes[url] ?? { body: "<pre>404</pre>", title: "404" };
+  return processedRoutes[url] ?? { body: `<pre>404 <a href="/" style="all:unset;cursor:pointer;">&larr; Back to home</a></pre>`, title: "404" };
 }
 
 export { layout };

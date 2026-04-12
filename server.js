@@ -20,26 +20,29 @@ if (isSSG) {
     ...cssFiles.map(f => `<link rel="preload" href="/assets/${f}" as="style" crossorigin>`),
   ].join('\n    ')
 
-  const renderJson = {}
-  for (const route of routes) {
-    const page = render(route)
-    renderJson[route] = JSON.stringify({ body: page.body, title: page.title, layout }) + '\n'
-      + JSON.stringify({ cache: all }) + '\n'
-  }
-  await fs.writeFile('./dist/render.json', JSON.stringify(renderJson))
-  console.log('  ✓ dist/render.json')
+  const line2 = JSON.stringify({ cache: all })
 
   const indexHtml = await fs.readFile('./dist/index.html', 'utf-8')
   for (const route of routes) {
     const page = render(route)
+    const line1 = JSON.stringify({ body: page.body, title: page.title, layout })
+    const inlined = `<script id="__render__" type="application/x-ndjson">${line1}\n${line2}\n</script>`
     const html = indexHtml
-      .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n  </head>`)
+      .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n    ${inlined}\n  </head>`)
       .replace('<main id="_root"></main>', `${layout}<main id="_root">${page.body}</main>`)
     const dir = path.join('./dist', route === '/' ? '' : route)
     await fs.mkdir(dir, { recursive: true })
     await fs.writeFile(path.join(dir, 'index.html'), html)
     console.log(`  ✓ ${route}`)
   }
+  // 404.html — reconocido por vite preview y hosts estáticos
+  const page404 = render('/404')
+  const html404 = indexHtml
+    .replace('</head>', `    ${preloads}\n    <title>404</title>\n  </head>`)
+    .replace('<main id="_root"></main>', `${layout}<main id="_root">${page404.body}</main>`)
+  await fs.writeFile('./dist/404.html', html404)
+  console.log('  ✓ /404.html')
+
   // limpiar dist/server — no necesario en SSG
   await fs.rm('./dist/server', { recursive: true, force: true })
   console.log(`\n${routes.length} páginas + render.json generados`)

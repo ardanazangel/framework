@@ -22,16 +22,11 @@ export function streamLines(response) {
 }
 
 export async function boot() {
-  // SSG: si existe render.json, usar datos pregenerados
-  let res
-  try {
-    const json = await fetch('/render.json').then(r => r.ok ? r.json() : null)
-    if (json?.[location.pathname]) {
-      const text = json[location.pathname]
-      res = new Response(text, { headers: { 'content-type': 'application/x-ndjson' } })
-    }
-  } catch {}
-  res ??= await fetch(location.pathname + '?render')
+  // SSG: datos inlineados en el HTML — zero fetch
+  const inlined = document.getElementById('__render__')
+  const res = inlined
+    ? new Response(inlined.textContent, { headers: { 'content-type': 'application/x-ndjson' } })
+    : await fetch(location.pathname + '?render')
   const read = streamLines(res)
 
   // line 1: current page + layout
