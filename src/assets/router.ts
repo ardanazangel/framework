@@ -3,7 +3,7 @@ type PageCache = Record<string, PageData>;
 
 const style = document.createElement("style");
 style.textContent = /* css */`
-  @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10vh) } }
+  @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10%) } }
   @keyframes page-in  { from { clip-path: polygon(0% 100vh, 100% 100vh, 100% 100vh, 0% 100vh); } }
   .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
   .page-out { animation: page-out 1.2s forwards var(--io4); z-index: 0;}
