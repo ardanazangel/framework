@@ -6,8 +6,8 @@ style.textContent = /* css */`
   @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10%) } }
   @keyframes page-in  { from { clip-path: polygon(0% 100vh, 100% 100vh, 100% 100vh, 0% 100vh); } }
   .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
-  .page-out { animation: page-out 1.2s forwards var(--io4); z-index: 0;}
-  .page-in  { animation: page-in  1.2s forwards var(--io4); z-index: 1; position: fixed; top: 0; left: 0; width: 100%; }
+  .page-out { animation: page-out 1.2s forwards var(--io4); z-index: 0; transition: none;}
+  .page-in  { animation: page-in  1.2s forwards var(--io4); z-index: 10; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; }
 `;
 document.head.appendChild(style);
 
@@ -95,16 +95,27 @@ async function navigate(path: string, push = true) {
 
   const oldPath = location.pathname;
   const oldPage = getPage();
-  const currentScroll = state.scroll;
 
+  // guardar posición de scroll antes de resetear
+  const scrollY = state.scroll;
+
+  window.dispatchEvent(new CustomEvent("scroll:lock"));
+
+  // congelar página vieja: top negativo para mostrar la posición de scroll actual
+  document.body.appendChild(oldPage);
   Object.assign(oldPage.style, {
     position: "fixed",
-    top: `-${currentScroll}px`,
+    top: `${-scrollY}px`,
     left: "0",
     right: "0",
-    width: "100%",
+    bottom: "0",
+    overflow: "hidden",
+    zIndex: "0",
   });
   oldPage.classList.add("page-out");
+
+  // nueva página siempre desde el top
+  window.dispatchEvent(new CustomEvent("scroll:reset"));
 
   document.querySelector("#_root")!.appendChild(newPage);
   if (push) history.pushState({}, "", path);
@@ -116,7 +127,8 @@ async function navigate(path: string, push = true) {
   await waitForAnimation(oldPage);
   oldPage.remove();
   newPage.classList.remove("page-in");
-  window.dispatchEvent(new CustomEvent("transition:end")); // scroll.js resetea lenis
+  window.dispatchEvent(new CustomEvent("transition:end")); // scroll.js resetea el scroll
+  window.dispatchEvent(new CustomEvent("scroll:unlock"));
   navigating = false;
 }
 

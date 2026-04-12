@@ -10,7 +10,7 @@ Minimal SSR/SPA hybrid built on Vite. Node dev server, Bun prod server, streamin
 | Prod server | Node.js HTTP with gzip streaming |
 | Renderer | `entry-server.js` → NDJSON stream (body first, cache second) |
 | Router | SPA client router, prefetch on hover, CSS transitions, page cache |
-| Scroll | Lenis smooth scroll (desktop only, lerp 0.09) |
+| Scroll | Smooth scroll (desktop only, lerp 0.09) |
 | Text | `splitText` server-side (words/chars), `splitLines` client-side via on-screen Canvas |
 | Media | IntersectionObserver lazy fade-in for `img/video[loading="lazy"]` |
 | Grid | `<grid-layout count="12">` web component, toggle with `Shift+G` |
@@ -50,13 +50,13 @@ src/
     lifecycle.js      # event bus
     loader.js         # asset load tracker, progress counter, trackPromise API
     form.js           # schemas, renderForm (server), hydrateForm (client), validate (shared)
-    scroll.js         # Lenis wrapper
+    scroll.js         # smooth scroll wrapper
     text-split.js     # splitText / splitLines
     media.js          # lazy load observer
     grid.js           # grid overlay web component
     sound.js          # (disabled)
     experience.js     # three.js WebGPU canvas
-    lenis/            # lenis source
+    scroll-engine/    # scroll engine source
 ```
 
 ## Adding pages
@@ -137,13 +137,13 @@ All events go through `emit` / `on` from `lifecycle.js`, and are also dispatched
 | `page:before-insert` | `{ path, el }` | new page element built, before DOM insert |
 | `page:mount` | `{ path }` | new page visible, old page removed |
 | `page:destroy` | `{ path }` | old page just removed |
-| `lenis:scroll` | `{ scroll, velocity, direction, progress }` | every Lenis scroll tick |
+| `scroll:tick` | `{ scroll, velocity, direction, progress }` | every scroll tick |
 
 ```js
 import { on } from "./assets/lifecycle.js";
 
 on("page:mount", ({ path }) => { ... });
-on("lenis:scroll", ({ scroll, velocity }) => { ... });
+on("scroll:tick", ({ scroll, velocity }) => { ... });
 ```
 
 ## Router
@@ -261,7 +261,7 @@ res.end(JSON.stringify({ ok: true }))
 
 ## Three.js / Experience
 
-One WebGPU renderer, fixed full-screen canvas (`position: fixed; z-index: -1`). A single RAF loop shared with Lenis runs from module import — no manual start needed.
+One WebGPU renderer, fixed full-screen canvas (`position: fixed; z-index: -1`). A single RAF loop shared with the scroll engine runs from module import — no manual start needed.
 
 **Architecture:**
 

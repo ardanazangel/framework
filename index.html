@@ -66,9 +66,16 @@
         font-size: calc(var(--vw) * 16);
         color: var(--black);
         background: var(--white);
-        position: relative;
-        scrollbar-width: none;
+        position: fixed;
+        width: 100%;
+        overflow: hidden;
         isolation: isolate;
+      }
+
+      #_root {
+        will-change: transform;
+        position: relative;
+        z-index: 1;
       }
 
       button {

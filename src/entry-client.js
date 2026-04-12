@@ -15,34 +15,42 @@ import { initExperience } from "./assets/experience.js";
 
 await initExperience();
 
-const modules = [media, lines, form];
-
-if (!detect.isMobile) {
-  const { scroll } = await import("./assets/scroll.js");
-  scroll.on(); // scroll siempre activo, no se apaga en transiciones
-}
-
+const modules     = [media, lines, form];
 const pageModules = { '/': home, '/about': about };
 
-const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
+let scrollEngine = null;
 
-const prefetched = new Set(
-  Object.entries(cache).filter(([, { prefetch }]) => prefetch).map(([path]) => path)
-);
+if (!detect.isMobile) {
+  const { scroll, initScroll } = await import("./assets/scroll.js");
+  scroll.on();
+  scrollEngine = scroll.engine;
+  const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
+  initScroll();
+  bootRouter(page, cache);
+} else {
+  const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
+  bootRouter(page, cache);
+}
 
-initRouter({
-  [location.pathname]: { body: page.body, title: page.title },
-  ...cache,
-});
+function bootRouter(page, cache) {
+  const prefetched = new Set(
+    Object.entries(cache).filter(([, { prefetch }]) => prefetch).map(([path]) => path)
+  );
 
-hooks.beforeInsert = ({ path, el }) => {
-  if (prefetched.has(path)) { ready(); return; }
-  track([...el.querySelectorAll("img[src]")].map((img) => img.getAttribute("src")));
-  track([...el.querySelectorAll("video[src]")].map((v) => v.getAttribute("src")), "video");
-  const pm = pageModules[path];
-  if (pm?.preload) trackPromise(...pm.preload());
-  ready();
-};
+  initRouter({
+    [location.pathname]: { body: page.body, title: page.title },
+    ...cache,
+  });
+
+  hooks.beforeInsert = ({ path, el }) => {
+    if (prefetched.has(path)) { ready(); return; }
+    track([...el.querySelectorAll("img[src]")].map((img) => img.getAttribute("src")));
+    track([...el.querySelectorAll("video[src]")].map((v) => v.getAttribute("src")), "video");
+    const pm = pageModules[path];
+    if (pm?.preload) trackPromise(...pm.preload());
+    ready();
+  };
+}
 
 hooks.destroy = ({ path }) => {
   state.route.previous = path;
@@ -59,5 +67,6 @@ hooks.mount = ({ path }) => {
   if (pm) { pm.init(); pm.on(); }
 };
 
-// primer mount — funciona con o sin router
-requestAnimationFrame(() => hooks.mount?.({ path: location.pathname }))
+window.addEventListener('loader:complete', () => {
+  hooks.mount?.({ path: location.pathname })
+}, { once: true })
