@@ -1,7 +1,7 @@
 const ua = navigator.userAgent.toLowerCase()
 const vendor = navigator.vendor ?? ''
 
-export const snif = {
+export const detect = {
   isMobile:
     navigator.userAgentData?.mobile ??
     (/mobi|android|iphone|ipad|ipod/i.test(ua) || navigator.maxTouchPoints > 1),

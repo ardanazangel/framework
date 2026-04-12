@@ -4,17 +4,20 @@ import { hooks, state } from "./assets/app.js";
 import { track, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
 import { media } from "./assets/media.js";
-import { sound } from "./assets/sound.js";
 import { lines } from "./assets/lines.js";
 import { form } from "./assets/form.js";
 import { home } from "./assets/pages/home.js";
-import { snif } from "./assets/snif.js";
+import { about } from "./assets/pages/about.js";
+import { detect } from "./assets/detect.js";
 
 import "./assets/grid.js";
+import { initExperience } from "./assets/experience.js";
 
-const modules = [media, sound, lines, form];
+await initExperience();
 
-if (!snif.isMobile) {
+const modules = [media, lines, form];
+
+if (!detect.isMobile) {
   const { scroll } = await import("./assets/scroll.js");
   scroll.on(); // scroll siempre activo, no se apaga en transiciones
 }
@@ -30,7 +33,7 @@ initRouter({
   ...cache,
 });
 
-const pageModules = { '/': home};
+const pageModules = { '/': home, '/about': about };
 
 hooks.beforeInsert = ({ path, el }) => {
   if (prefetched.has(path)) { ready(); return; }
@@ -42,7 +45,9 @@ hooks.beforeInsert = ({ path, el }) => {
 hooks.destroy = ({ path }) => {
   state.route.previous = path;
   modules.forEach(m => m.off());
-  pageModules[path]?.off();
+  const pm = pageModules[path];
+  pm?.off();
+  pm?.destroy?.();
 };
 
 hooks.mount = ({ path }) => {

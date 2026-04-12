@@ -1,7 +1,9 @@
 import { Lenis } from "./lenis/lenis.ts"
 import { state } from "./app.js"
+import { Raf } from "./raf.js"
 
-export const lenis = new Lenis({ autoRaf: true, lerp: 0.09 })
+export const lenis = new Lenis({ autoRaf: false, lerp: 0.09 })
+new Raf((_, time) => lenis.raf(time)).run()
 
 const scrollState = { scroll: 0, velocity: 0, direction: 0, progress: 0 }
 
