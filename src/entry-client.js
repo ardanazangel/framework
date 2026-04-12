@@ -1,7 +1,7 @@
 import "./style.css";
 import { initRouter } from "./assets/router.ts";
 import { hooks, state } from "./assets/app.js";
-import { track, ready } from "./assets/loader.js";
+import { track, trackPromise, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
 import { media } from "./assets/media.js";
 import { lines } from "./assets/lines.js";
@@ -22,7 +22,9 @@ if (!detect.isMobile) {
   scroll.on(); // scroll siempre activo, no se apaga en transiciones
 }
 
-const { page, cache } = await boot();
+const pageModules = { '/': home, '/about': about };
+
+const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
 
 const prefetched = new Set(
   Object.entries(cache).filter(([, { prefetch }]) => prefetch).map(([path]) => path)
@@ -33,12 +35,12 @@ initRouter({
   ...cache,
 });
 
-const pageModules = { '/': home, '/about': about };
-
 hooks.beforeInsert = ({ path, el }) => {
   if (prefetched.has(path)) { ready(); return; }
   track([...el.querySelectorAll("img[src]")].map((img) => img.getAttribute("src")));
   track([...el.querySelectorAll("video[src]")].map((v) => v.getAttribute("src")), "video");
+  const pm = pageModules[path];
+  if (pm?.preload) trackPromise(...pm.preload());
   ready();
 };
 

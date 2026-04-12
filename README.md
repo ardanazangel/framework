@@ -259,6 +259,78 @@ res.writeHead(200, { 'Content-Type': 'application/json' })
 res.end(JSON.stringify({ ok: true }))
 ```
 
+## Three.js / Experience
+
+One WebGPU renderer, fixed full-screen canvas (`position: fixed; z-index: -1`). A single RAF loop shared with Lenis runs from module import — no manual start needed.
+
+**Architecture:**
+
+| | |
+|---|---|
+| `raf.js` | Global RAF loop. `class Raf` — `.run()` / `.stop()` to subscribe/unsubscribe |
+| `experience.js` | WebGPU renderer + camera. Re-exports `THREE` and `Raf` — only place Three.js is imported |
+| `pages/*.js` | Each page creates its own `THREE.Scene`, calls `setScene()`, disposes on destroy |
+
+**Page module pattern:**
+
+```js
+import { THREE, Raf, setScene } from "../experience.js";
+
+let scene = null;
+let mesh  = null;
+
+const loader = new THREE.TextureLoader();
+const raf = new Raf((delta) => { mesh.rotation.y += delta; });
+
+export const myPage = {
+  // called in hooks.beforeInsert — loader tracks these promises
+  preload() {
+    return [loader.loadAsync('/texture.jpg')];
+  },
+
+  // called in hooks.mount — textures already in browser cache, loader.load() is sync
+  init() {
+    scene = new THREE.Scene();
+    const texture = loader.load('/texture.jpg');
+    mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(),
+      new THREE.MeshBasicMaterial({ map: texture }),
+    );
+    scene.add(mesh);
+    setScene(scene);
+  },
+
+  on()  { raf.run(); },
+  off() { raf.stop(); },
+
+  destroy() {
+    scene.remove(mesh);
+    mesh.material.map?.dispose();
+    mesh.material.dispose();
+    mesh.geometry.dispose();
+    mesh  = null;
+    scene = null;
+  },
+};
+```
+
+Register in `entry-client.js`:
+
+```js
+import { myPage } from "./assets/pages/my-page.js";
+const pageModules = { '/my-page': myPage };
+```
+
+**Texture preloading** — `preload()` returns an array of promises. `entry-client.js` passes them to `trackPromise` in `hooks.beforeInsert`, so the loader counter includes texture downloads. By the time `init()` runs, images are cached and `loader.load()` resolves synchronously.
+
+**Dispose checklist** — call in `destroy()`:
+- `geometry.dispose()`
+- `material.dispose()`
+- `material.map?.dispose()` (and any other texture uniforms)
+- `scene.remove(mesh)` then set references to `null`
+
+The renderer and camera are never disposed — they persist for the lifetime of the app.
+
 ## Grid overlay
 
 `<grid-layout count="12">` renders a fixed 12-column overlay. Toggle visibility with `Shift+G`. Columns are red at 10% opacity. Configured in `index.html`, column count set via attribute.

@@ -12,17 +12,20 @@ const raf = new Raf((delta) => {
 });
 
 export const home = {
+  preload() {
+    return [loader.loadAsync('/test.jpg')];
+  },
+
   init() {
     scene = new THREE.Scene();
 
-    loader.load('/test.jpg', (texture) => {
-      cube = new THREE.Mesh(
-        new THREE.BoxGeometry(),
-        new THREE.MeshBasicMaterial({ map: texture }),
-      );
-      scene.add(cube);
-    });
-
+    // la textura ya está en caché — load() es síncrono aquí
+    const texture = loader.load('/test.jpg');
+    cube = new THREE.Mesh(
+      new THREE.BoxGeometry(),
+      new THREE.MeshBasicMaterial({ map: texture }),
+    );
+    scene.add(cube);
     setScene(scene);
   },
 

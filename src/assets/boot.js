@@ -1,4 +1,4 @@
-import { track, ready } from './loader.js'
+import { track, trackPromise, ready } from './loader.js'
 
 export function streamLines(response) {
   const reader = response.body.getReader()
@@ -21,7 +21,7 @@ export function streamLines(response) {
   return readLine
 }
 
-export async function boot() {
+export async function boot({ preload } = {}) {
   // SSG: datos inlineados en el HTML — zero fetch
   const inlined = document.getElementById('__render__')
   const res = inlined
@@ -40,6 +40,7 @@ export async function boot() {
 
   track([...root.querySelectorAll('img[src]')].map(img => img.src))
   track([...root.querySelectorAll('video[src]')].map(v => v.src), 'video')
+  if (preload) trackPromise(...preload())
 
   // line 2: full cache + prefetch tracking
   let cache = {};
