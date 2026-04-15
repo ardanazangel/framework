@@ -1,6 +1,6 @@
 // Slider engine — infinite + finite, snap, drag, wheel, touch
 
-import { damp, symmetricMod, LAMBDA } from '../math.js'
+import { damp, symmetricMod, LAMBDA } from '../utils/math.js'
 
 // ─── defaults ────────────────────────────────────────────────────────────────
 

@@ -1,3 +1,5 @@
+import { detect } from "./utils/detect.js"
+
 function getWin() {
   const w = innerWidth
   const h = innerHeight
@@ -8,7 +10,7 @@ function getWin() {
     semi: { w: w * 0.5, h: h * 0.5 },
     dpr: devicePixelRatio,
     isLandscape: w > h,
-    isMobile: w <= 768,
+    isMobile: detect.isMobile,
   }
 }
 
@@ -28,6 +30,6 @@ window.addEventListener('resize', () => {
 
 export const hooks = {
   beforeInsert: null, // ({ path, el }) => void
-  mount:        null, // ({ path })      => void
-  destroy:      null, // ({ path })      => void
+  mount: null, // ({ path })      => void
+  destroy: null, // ({ path })      => void
 }

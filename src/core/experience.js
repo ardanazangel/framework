@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { WebGPURenderer } from "three/webgpu";
 import { state } from "./app.js";
-import { Raf } from "./raf.js";
+import { Raf } from "./utils/raf.js";
 
 export { THREE, Raf };
 

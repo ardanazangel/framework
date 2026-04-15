@@ -17,7 +17,7 @@ function complete() {
 
 function settle() {
   if (!pool.total) return;
-  el.textContent = Math.round((++pool.settled / pool.total) * 100);
+  loadNumber.textContent = ((++pool.settled / pool.total) * 100) | 0;
   if (pool.ready && pool.settled === pool.total) complete();
 }
 

@@ -4,12 +4,14 @@ import contact from "./pages/contact.html?raw";
 import morphing from "./pages/morphing.html?raw";
 import slider from "./pages/slider.html?raw";
 
-
 import layout from "./layout.html?raw";
 
-import { splitText } from "./core/text-split.js";
+import { splitText } from "./core/split-engine/text-split.js";
 import { projects } from "./data/projects.js";
-import { renderForm, schemas, validate } from "./core/form.js";
+import { renderForm } from "./core/form-engine/render.js";
+import { schemas } from "./core/form-engine/schemas.js";
+import { validate } from "./core/form-engine/validate.js";
+
 export { schemas, validate };
 
 function injectForms(html) {
@@ -27,14 +29,14 @@ function injectForms(html) {
 }
 
 const projectPage = (p) => /*html*/ `
-<section>
-  <h1 class="chars">${p.title}</h1>
-  <p>${p.year}</p>
-  </section>
-  ${p.imgs.map((src) => `<section><img src="${src}" loading="lazy" width="2400" height="1600"></section>`).join("\n  ")}
   <section>
-  <video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" loading="lazy" width="1920" height="1080" loop muted playsinline controls></video>
-  <a href="/">← Back</a>
+    <h1 class="chars">${p.title}</h1>
+    <p>${p.year}</p>
+    </section>
+      ${p.imgs.map((src) => `<section><img src="${src}" loading="lazy" width="2400" height="1600"></section>`).join("\n  ")}
+    <section>
+    <video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" loading="lazy" width="1920" height="1080" loop muted playsinline controls></video>
+    <a href="/">← Back</a>
   </section>
 `;
 

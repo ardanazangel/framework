@@ -1,6 +1,6 @@
-import { state } from './app.js'
-import { Raf } from './raf.js'
-import { engine } from './scroll-engine/index.js'
+import { state } from '../app.js'
+import { Raf } from '../utils/raf.js'
+import { engine } from './index.js'
 
 const items = []
 let totalHeight = 0

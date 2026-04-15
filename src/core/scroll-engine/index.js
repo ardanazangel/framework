@@ -1,7 +1,7 @@
 // Scroll engine. Solo números — no toca el DOM.
 // cur → posición renderizada. tar → posición objetivo.
 
-import { damp, clamp as _clamp, LAMBDA } from '../math.js'
+import { damp, clamp as _clamp, LAMBDA } from '../utils/math.js'
 
 const LERP      = LAMBDA // factor de damp (frame-rate independent)
 const THRESHOLD = 0.001  // umbral de parada

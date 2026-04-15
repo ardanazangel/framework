@@ -3,17 +3,18 @@ import { initRouter } from "./core/router.js";
 import { hooks, state } from "./core/app.js";
 import { track, trackPromise, ready } from "./core/loader.js";
 import { boot } from "./core/boot.js";
-import { media } from "./core/media.js";
-import { lines } from "./core/lines.js";
-import { form } from "./core/form.js";
+import { media } from "./core/utils/media.js";
+import { lines } from "./core/split-engine/lines-split.js";
+import { form } from "./core/form-engine/hydrate.js";
 import { home } from "./pages/home.js";
 import { about } from "./pages/about.js";
 import { morphing } from "./pages/morphing.js";
 import { slider } from "./pages/slider.js";
 
-import { detect } from "./core/detect.js";
-import "./core/grid.js";
+import { detect } from "./core/utils/detect.js";
 import { initExperience } from "./core/experience.js";
+
+if (import.meta.env.DEV) import('./core/utils/grid.js')
 
 await initExperience();
 
@@ -23,7 +24,7 @@ const pageModules = { "/": home, "/about": about, "/morphing": morphing, "/slide
 let scrollEngine = null;
 
 if (!detect.isMobile) {
-  const { scroll, initScroll } = await import("./core/scroll.js");
+  const { scroll, initScroll } = await import("./core/scroll-engine/scroll.js");
   scroll.on();
   scrollEngine = scroll.engine;
   const { page, cache } = await boot({
