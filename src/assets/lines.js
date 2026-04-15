@@ -25,34 +25,21 @@ function splitContainer(container) {
   }
 }
 
-function apply(selector) {
-  const containers = [...document.querySelectorAll(selector)];
-  containers.forEach(splitContainer);
-  // scope .line-inner al mismo ancestor para no tocar la página saliente
-  containers.forEach((container) => {
-    container.querySelectorAll(".line-inner").forEach((el, i) => {
-      setTimeout(() => {
-        setTimeout(() => el.classList.add("on"), i * 20);
-      }, 500);
-    });
-  });
+function split() {
+  document.querySelectorAll("#_root .lines").forEach(splitContainer);
 }
 
 let fontsReady = false;
-
-function run() {
-  requestAnimationFrame(() => apply(".page:not(.page-out) .lines"));
-}
 
 export const lines = {
   on() {
     if (!fontsReady) {
       document.fonts.ready.then(() => {
         fontsReady = true;
-        run();
+        split()
       });
     } else {
-      run();
+      split()
     }
   },
   off() {},

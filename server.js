@@ -112,78 +112,92 @@ async function serveStatic(req, res) {
   }
 }
 
-createServer(async (req, res) => {
-  const url = new URL(req.url, 'http://x')
+let currentPort = process.env.PORT ? parseInt(process.env.PORT) : 5173
 
-  if (!isProduction) {
-    await new Promise((resolve) => vite.middlewares(req, res, resolve))
-    if (res.writableEnded) return
-  }
+function startServer() {
+  createServer(async (req, res) => {
+    const url = new URL(req.url, 'http://x')
 
-  // in production, static assets (including pre-generated render.json) take priority
-  if (isProduction && await serveStatic(req, res)) return
+    if (!isProduction) {
+      await new Promise((resolve) => vite.middlewares(req, res, resolve))
+      if (res.writableEnded) return
+    }
 
-  if (req.method === 'POST' && url.pathname.startsWith('/api/')) {
-    const name = url.pathname.slice(5) // strip /api/
-    const { schemas, validate } = await getModule()
-    const schema = schemas[name]
+    // in production, static assets (including pre-generated render.json) take priority
+    if (isProduction && await serveStatic(req, res)) return
 
-    if (!schema) {
-      res.writeHead(404).end('Not found')
+    if (req.method === 'POST' && url.pathname.startsWith('/api/')) {
+      const name = url.pathname.slice(5) // strip /api/
+      const { schemas, validate } = await getModule()
+      const schema = schemas[name]
+
+      if (!schema) {
+        res.writeHead(404).end('Not found')
+        return
+      }
+
+      let body
+      try {
+        const raw = await new Promise((resolve, reject) => {
+          let data = ''
+          req.on('data', chunk => data += chunk)
+          req.on('end', () => resolve(data))
+          req.on('error', reject)
+        })
+        body = JSON.parse(raw)
+      } catch {
+        res.writeHead(400).end('Invalid JSON')
+        return
+      }
+
+      const errors = {}
+      for (const field of schema.fields) {
+        const error = validate(field, body[field.name] ?? '')
+        if (error) errors[field.name] = error
+      }
+
+      if (Object.keys(errors).length) {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ errors }))
+        return
+      }
+
+      // TODO: handle validated data (send email, save to db, etc.)
+      console.log(`[form:${name}]`, body)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true }))
       return
     }
 
-    let body
-    try {
-      const raw = await new Promise((resolve, reject) => {
-        let data = ''
-        req.on('data', chunk => data += chunk)
-        req.on('end', () => resolve(data))
-        req.on('error', reject)
-      })
-      body = JSON.parse(raw)
-    } catch {
-      res.writeHead(400).end('Invalid JSON')
+    if (url.searchParams.has('render')) {
+      const { render, renderAll, layout } = await getModule()
+      const page = render(url.pathname)
+      res.setHeader('Content-Type', 'application/x-ndjson')
+      res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
+      setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
       return
     }
 
-    const errors = {}
-    for (const field of schema.fields) {
-      const error = validate(field, body[field.name] ?? '')
-      if (error) errors[field.name] = error
+    // SPA fallback
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+
+    if (isProduction) {
+      let html = await fs.readFile('./dist/index.html', 'utf-8')
+      return res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
     }
 
-    if (Object.keys(errors).length) {
-      res.writeHead(400, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ errors }))
-      return
+    let html = await fs.readFile('./index.html', 'utf-8')
+    html = await vite.transformIndexHtml(url.pathname, html)
+    res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${currentPort} in use, trying ${currentPort + 1}...`)
+      currentPort++
+      startServer()
+    } else {
+      throw err
     }
+  }).listen(currentPort, () => console.log(`Server started at http://localhost:${currentPort}`))
+}
 
-    // TODO: handle validated data (send email, save to db, etc.)
-    console.log(`[form:${name}]`, body)
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ ok: true }))
-    return
-  }
-
-  if (url.searchParams.has('render')) {
-    const { render, renderAll, layout } = await getModule()
-    const page = render(url.pathname)
-    res.setHeader('Content-Type', 'application/x-ndjson')
-    res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
-    setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
-    return
-  }
-
-  // SPA fallback
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-
-  if (isProduction) {
-    let html = await fs.readFile('./dist/index.html', 'utf-8')
-    return res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
-  }
-
-  let html = await fs.readFile('./index.html', 'utf-8')
-  html = await vite.transformIndexHtml(url.pathname, html)
-  res.end(html.replace('<meta charset="UTF-8"', preloads + '\n    <meta charset="UTF-8"'))
-}).listen(port, () => console.log(`Server started at http://localhost:${port}`))
+startServer()

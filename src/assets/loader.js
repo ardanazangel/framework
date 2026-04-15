@@ -1,13 +1,17 @@
-const el = document.getElementById("loader");
+const loadNumber = document.getElementById("load-number");
+const loadWrapper = document.getElementById("loader");
 
 let pool = { total: 0, settled: 0, ready: false };
 
 function complete() {
-  el.textContent = "100";
+  loadNumber.textContent = "100";
   window.dispatchEvent(new CustomEvent("loader:complete"));
 
   setTimeout(() => {
-    el.style.opacity = 0;
+    loadWrapper.style.opacity = 0;
+    setTimeout(() => {
+      loadWrapper.style.background = "transparent";
+    }, 400);
   }, 200);
 }
 
@@ -55,6 +59,7 @@ export function ready() {
 
 window.addEventListener("loader:start", () => {
   pool = { total: 0, settled: 0, ready: false };
-  el.textContent = "0";
-  el.style.opacity = 1;
+  loadNumber.textContent = "0";
+  loadNumber.style.opacity = 1;
+  loadWrapper.style.opacity = 1;
 });

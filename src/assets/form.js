@@ -147,7 +147,7 @@ export const form = {
   off() {},
 }
 
-export function hydrateForm(formEl, schema) {
+function hydrateForm(formEl, schema) {
   if (!formEl) return
 
   const status = formEl.querySelector('.form-status')

@@ -1,7 +1,6 @@
-import { THREE, Raf, setScene } from "../experience.js";
+import { THREE, Raf, scene } from "../experience.js";
 
-let scene  = null;
-let cube   = null;
+let cube  = null;
 
 const loader = new THREE.TextureLoader();
 
@@ -17,20 +16,18 @@ export const home = {
   },
 
   init() {
-    scene = new THREE.Scene();
-
-    // la textura ya está en caché — load() es síncrono aquí
+    // Three.js
     const texture = loader.load('/test.jpg');
     cube = new THREE.Mesh(
       new THREE.BoxGeometry(),
       new THREE.MeshBasicMaterial({ map: texture }),
     );
     scene.add(cube);
-    setScene(scene);
+
   },
 
   on()  { raf.run(); },
-  off() { raf.stop(); },
+  off() {  },
 
   destroy() {
     if (cube) {
@@ -40,6 +37,5 @@ export const home = {
       cube.geometry.dispose();
       cube = null;
     }
-    scene = null;
   },
 };

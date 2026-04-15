@@ -6,7 +6,7 @@ function getWin() {
     hw: h / w,
     wh: w / h,
     semi: { w: w * 0.5, h: h * 0.5 },
-    dpr: devicePixelRatio,
+    dpr: devicePixelRatio * 2,
     isLandscape: w > h,
     isMobile: w <= 768,
   }
@@ -26,8 +26,6 @@ window.addEventListener('resize', () => {
   window.dispatchEvent(new CustomEvent('win:resize', { detail: state.win }))
 })
 
-// Hooks de lifecycle — callbacks directos, sin pub/sub.
-// El router los llama, entry-client.js los asigna.
 export const hooks = {
   beforeInsert: null, // ({ path, el }) => void
   mount:        null, // ({ path })      => void

@@ -7,6 +7,7 @@
       * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
       }
 
       @font-face {
@@ -66,14 +67,10 @@
         font-size: calc(var(--vw) * 16);
         color: var(--black);
         background: var(--white);
-        position: fixed;
-        width: 100%;
-        overflow: hidden;
         isolation: isolate;
       }
 
       #_root {
-        will-change: transform;
         position: relative;
         z-index: 1;
       }
@@ -106,6 +103,7 @@
         width: 100vw;
         height: 100dvh;
         z-index: 1;
+        pointer-events: none;
       }
 
       .page {
@@ -128,13 +126,8 @@
       span.line-inner {
         display: inline-block;
         white-space: nowrap;
-        transform: translateY(150%);
         transition: transform 1s var(--o4);
         will-change: transform;
-      }
-
-      span.line-inner.on {
-        transform: translateY(0%);
       }
 
       span.word-inner {
@@ -145,29 +138,38 @@
 
       #loader {
         position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #f2f2f2;
+        pointer-events: none;
+        z-index: 100;
+        transition: opacity 0.4s var(--o3);
+      }
+
+      #load-number {
+        position: fixed;
         bottom: calc(var(--vw) * 16);
         right: calc(var(--vw) * 16);
         font-family: "nmb";
         font-size: calc(var(--vw) * 16);
-        color: red;
+        color: black;
         opacity: 0;
         pointer-events: none;
         z-index: 9999;
+        font-size: calc(var(--vw) * 24);
       }
 
       img[loading="lazy"],
       video[loading="lazy"] {
         opacity: 0;
-        transition: opacity 0.8s var(--o3);
+        transition: opacity 0.4s var(--o3);
       }
 
-      img[loading="lazy"].loaded,
-      video[loading="lazy"].loaded {
+      img.loaded,
+      video.loaded {
         opacity: 1;
-      }
-
-      .progress-bar {
-        transition: transform 0.4s var(--in-out-4);
       }
 
       @media (max-width: 768px) {
@@ -178,12 +180,15 @@
     </style>
   </head>
   <body>
-    <div id="loader"></div>
+    <div id="loader">
+      <div id="load-background"></div>
+      <div id="load-number"></div>
+    </div>
     <grid-layout count="12"></grid-layout>
     <main id="_root"></main>
     <canvas></canvas>
     <script>
-      const el = document.getElementById("loader");
+      const el = document.getElementById("load-number");
       el.textContent = "0";
       el.style.opacity = 1;
     </script>

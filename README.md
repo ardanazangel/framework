@@ -10,10 +10,10 @@ Minimal SSR/SPA hybrid built on Vite. Node dev server, Bun prod server, streamin
 | Prod server | Node.js HTTP with gzip streaming |
 | Renderer | `entry-server.js` → NDJSON stream (body first, cache second) |
 | Router | SPA client router, prefetch on hover, CSS transitions, page cache |
-| Scroll | Smooth scroll (desktop only, lerp 0.09) |
-| Text | `splitText` server-side (words/chars), `splitLines` client-side via on-screen Canvas |
-| Media | IntersectionObserver lazy fade-in for `img/video[loading="lazy"]` |
-| Grid | `<grid-layout count="12">` web component, toggle with `Shift+G` |
+| Scroll | Smooth scroll (desktop only, frame-rate independent damp) |
+| Text | `splitText` server-side (words/chars), `lines.js` client-side via `@chenglou/pretext` |
+| Media | Fade-in when `img`/`video` finishes loading |
+| Grid | 12-column overlay module, toggle with `Shift+G` |
 | Lifecycle | `emit(name, detail)` / `on(name, fn)` event bus |
 | 3D | Three.js WebGPU canvas, fixed full-screen background (`z-index: -1`) |
 
@@ -47,13 +47,12 @@ src/
   assets/
     boot.js           # initial NDJSON fetch, populates DOM + cache before router starts
     router.ts         # SPA router
-    lifecycle.js      # event bus
     loader.js         # asset load tracker, progress counter, trackPromise API
     form.js           # schemas, renderForm (server), hydrateForm (client), validate (shared)
     scroll.js         # smooth scroll wrapper
-    text-split.js     # splitText / splitLines
+    text-split.js     # splitText (server-side words/chars)
     media.js          # lazy load observer
-    grid.js           # grid overlay web component
+    grid.js           # grid overlay, Shift+G to toggle
     sound.js          # (disabled)
     experience.js     # three.js WebGPU canvas
     scroll-engine/    # scroll engine source
@@ -124,26 +123,23 @@ const routes = {
 
 Prefetch data comes from the second NDJSON line already fetched on boot — no extra requests.
 
-> `on('loader:complete', fn)` won't work — the event is dispatched from inline script via `window.dispatchEvent`, not through the lifecycle `emit`. Use `window.addEventListener` directly.
-
 ## Lifecycle events
 
-All events go through `emit` / `on` from `lifecycle.js`, and are also dispatched on `window` as `CustomEvent`.
+All events are dispatched on `window` as `CustomEvent`.
 
 | Event | Detail | When |
 |---|---|---|
-| `loader:start` | `null` | navigation begins or initial load |
-| `loader:complete` | `null` | images loaded + 200ms delay |
-| `page:before-insert` | `{ path, el }` | new page element built, before DOM insert |
-| `page:mount` | `{ path }` | new page visible, old page removed |
-| `page:destroy` | `{ path }` | old page just removed |
-| `scroll:tick` | `{ scroll, velocity, direction, progress }` | every scroll tick |
+| `loader:start` | — | navigation begins or initial load |
+| `loader:complete` | — | images loaded + 200ms delay |
+| `scroll:tick` | `{ scroll, velocity, direction }` | every scroll tick (desktop only) |
+| `scroll:lock` / `scroll:unlock` | — | during page transitions |
+| `scroll:reset` | — | reset scroll to 0 |
+| `transition:end` | — | page-out animation finished |
+| `win:resize` | `{ w, h, hw, wh, semi, dpr, isLandscape, isMobile }` | window resize |
 
 ```js
-import { on } from "./assets/lifecycle.js";
-
-on("page:mount", ({ path }) => { ... });
-on("scroll:tick", ({ scroll, velocity }) => { ... });
+window.addEventListener('loader:complete', () => { ... });
+window.addEventListener('scroll:tick', ({ detail: { scroll, velocity } }) => { ... });
 ```
 
 ## Router
@@ -162,36 +158,20 @@ on("scroll:tick", ({ scroll, velocity }) => { ... });
 - `class="words"` → wraps each word in `<span class="word"><span class="word-inner">`
 - `class="chars"` → wraps each char in `<span class="char"><span class="char-inner">`
 
-**Client-side** (`splitLines`) — uses an on-screen hidden `<canvas>` to measure real line breaks (on-screen canvas inherits `@font-face` declarations; `OffscreenCanvas` does not):
-- `class="lines"` → call `splitLines([...document.querySelectorAll('.lines')])`
-- Outputs `<span class="line"><span class="line-inner">` per line
-- `line-inner` starts at `translateY(150%)`, add class `on` to animate in
-- On full reload, waits for `document.fonts.ready` before splitting to ensure custom fonts are loaded
+**Client-side** (`lines.js`) — uses `@chenglou/pretext` (`prepareWithSegments` + `layoutWithLines`) to measure real line breaks against the computed font/width, then wraps each line in `<span class="line"><span class="line-inner">`:
+- `class="lines"` → handled automatically by `lines.on()` on every `page:mount`
+- `line-inner` starts at `translateY(150%)`, class `on` is added staggered to animate in
+- On first load, waits for `document.fonts.ready` before splitting
+- On client-side navigation, re-runs on `transition:end`
 
-```js
-// full reload — wait for fonts then split + animate
-document.fonts.ready.then(() => {
-  splitLines([...document.querySelectorAll(".lines")]);
-  document.querySelectorAll(".line-inner").forEach((el, i) => {
-    setTimeout(() => el.classList.add("on"), i * 20);
-  });
-});
-
-// client-side navigation
-on("page:mount", () => {
-  splitLines([...document.querySelectorAll(".page .lines")]);
-  document.querySelectorAll(".line-inner").forEach((el, i) => {
-    setTimeout(() => el.classList.add("on"), i * 20);
-  });
-});
-```
+No manual calls needed — `lines` is registered as a module in `entry-client.js` and runs automatically.
 
 ## Media
 
-`img[loading="lazy"]` and `video[loading="lazy"]` fade in when they enter the viewport (200px rootMargin). Observer resets on every `page:mount`.
+`img` and `video` elements fade in once they finish loading (class `loaded` added on `load`/`loadeddata`). Runs on every `page:mount` via `media.on()`.
 
 ```html
-<img src="..." loading="lazy" width="800" height="600">
+<img src="..." width="800" height="600">
 ```
 
 ## Forms
@@ -333,4 +313,4 @@ The renderer and camera are never disposed — they persist for the lifetime of 
 
 ## Grid overlay
 
-`<grid-layout count="12">` renders a fixed 12-column overlay. Toggle visibility with `Shift+G`. Columns are red at 10% opacity. Configured in `index.html`, column count set via attribute.
+`grid.js` injects a fixed 12-column overlay into the DOM. Toggle visibility with `Shift+G`. Columns are red at 10% opacity.

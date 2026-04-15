@@ -1,7 +1,5 @@
-import { THREE, setScene } from "../experience.js";
-import { Raf } from "../raf.js";
+import { THREE, Raf, scene } from "../experience.js";
 
-let scene  = null;
 let sphere = null;
 
 const raf = new Raf((delta) => {
@@ -12,22 +10,24 @@ const raf = new Raf((delta) => {
 
 export const about = {
   init() {
-    scene  = new THREE.Scene();
     sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 32, 32),
+      new THREE.SphereGeometry(1, 128, 128),
       new THREE.MeshNormalMaterial({ wireframe: true }),
     );
     scene.add(sphere);
-    setScene(scene);
+
   },
 
   on()  { raf.run(); },
   off() { raf.stop(); },
 
   destroy() {
-    sphere.geometry.dispose();
-    sphere.material.dispose();
-    sphere = null;
-    scene  = null;
+    if (sphere) {
+      scene.remove(sphere);
+      sphere.material.map?.dispose();
+      sphere.material.dispose();
+      sphere.geometry.dispose();
+      sphere = null;
+    }
   },
 };

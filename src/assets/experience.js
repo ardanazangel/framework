@@ -4,15 +4,21 @@ import { state } from "./app.js";
 import { Raf } from "./raf.js";
 
 export { THREE, Raf };
+
+// 👉 cámara compartida
 export const camera = new THREE.PerspectiveCamera(75, state.win.wh, 0.1, 1000);
 camera.position.z = 5;
 
+// 👉 escena compartida (singleton real)
+export const scene = new THREE.Scene();
+
+// 👉 renderer
 export let renderer = null;
 
-let _scene = null;
-export function setScene(scene) { _scene = scene; }
-
-const raf = new Raf(() => { if (_scene) renderer?.render(_scene, camera); });
+// 👉 RAF loop
+const raf = new Raf(() => {
+  renderer?.render(scene, camera);
+});
 
 export async function initExperience() {
   const canvas = document.querySelector("canvas");
@@ -20,15 +26,21 @@ export async function initExperience() {
 
   renderer = new WebGPURenderer({ canvas, antialias: true, alpha: true });
   await renderer.init();
+
   renderer.setSize(state.win.w, state.win.h);
   renderer.setPixelRatio(state.win.dpr);
   renderer.setClearColor(0x000000, 0);
 
   raf.run();
 
+  let resizeTimeout;
+
   window.addEventListener("win:resize", ({ detail: win }) => {
-    camera.aspect = win.wh;
-    camera.updateProjectionMatrix();
-    renderer.setSize(win.w, win.h);
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      camera.aspect = win.wh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(win.w, win.h);
+    }, 100);
   });
 }

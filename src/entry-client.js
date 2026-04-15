@@ -1,5 +1,5 @@
 import "./style.css";
-import { initRouter } from "./assets/router.ts";
+import { initRouter } from "./assets/router.js";
 import { hooks, state } from "./assets/app.js";
 import { track, trackPromise, ready } from "./assets/loader.js";
 import { boot } from "./assets/boot.js";
@@ -8,15 +8,18 @@ import { lines } from "./assets/lines.js";
 import { form } from "./assets/form.js";
 import { home } from "./assets/pages/home.js";
 import { about } from "./assets/pages/about.js";
-import { detect } from "./assets/detect.js";
+import { morphing } from "./assets/pages/morphing.js";
+import { slider } from "./assets/pages/slider.js";
 
+
+import { detect } from "./assets/detect.js";
 import "./assets/grid.js";
 import { initExperience } from "./assets/experience.js";
 
 await initExperience();
 
-const modules     = [media, lines, form];
-const pageModules = { '/': home, '/about': about };
+const modules = [media, lines, form];
+const pageModules = { "/": home, "/about": about, "/morphing": morphing, "/slider": slider };
 
 let scrollEngine = null;
 
@@ -24,17 +27,23 @@ if (!detect.isMobile) {
   const { scroll, initScroll } = await import("./assets/scroll.js");
   scroll.on();
   scrollEngine = scroll.engine;
-  const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
+  const { page, cache } = await boot({
+    preload: pageModules[location.pathname]?.preload,
+  });
   initScroll();
   bootRouter(page, cache);
 } else {
-  const { page, cache } = await boot({ preload: pageModules[location.pathname]?.preload });
+  const { page, cache } = await boot({
+    preload: pageModules[location.pathname]?.preload,
+  });
   bootRouter(page, cache);
 }
 
 function bootRouter(page, cache) {
   const prefetched = new Set(
-    Object.entries(cache).filter(([, { prefetch }]) => prefetch).map(([path]) => path)
+    Object.entries(cache)
+      .filter(([, { prefetch }]) => prefetch)
+      .map(([path]) => path),
   );
 
   initRouter({
@@ -43,9 +52,19 @@ function bootRouter(page, cache) {
   });
 
   hooks.beforeInsert = ({ path, el }) => {
-    if (prefetched.has(path)) { ready(); return; }
-    track([...el.querySelectorAll("img[src]")].map((img) => img.getAttribute("src")));
-    track([...el.querySelectorAll("video[src]")].map((v) => v.getAttribute("src")), "video");
+    if (prefetched.has(path)) {
+      ready();
+      return;
+    }
+    track(
+      [...el.querySelectorAll("img[src]")].map((img) =>
+        img.getAttribute("src"),
+      ),
+    );
+    track(
+      [...el.querySelectorAll("video[src]")].map((v) => v.getAttribute("src")),
+      "video",
+    );
     const pm = pageModules[path];
     if (pm?.preload) trackPromise(...pm.preload());
     ready();
@@ -54,7 +73,7 @@ function bootRouter(page, cache) {
 
 hooks.destroy = ({ path }) => {
   state.route.previous = path;
-  modules.forEach(m => m.off());
+  modules.forEach((m) => m.off());
   const pm = pageModules[path];
   pm?.off();
   pm?.destroy?.();
@@ -62,11 +81,20 @@ hooks.destroy = ({ path }) => {
 
 hooks.mount = ({ path }) => {
   state.route.current = path;
-  modules.forEach(m => m.on());
+  modules.forEach((m) => m.on());
   const pm = pageModules[path];
-  if (pm) { pm.init(); pm.on(); }
+  if (pm) {
+    pm.init();
+    pm.on();
+  }
 };
 
-window.addEventListener('loader:complete', () => {
-  hooks.mount?.({ path: location.pathname })
-}, { once: true })
+window.addEventListener(
+  "loader:complete",
+  () => {
+    setTimeout(() => {
+      hooks.mount?.({ path: location.pathname });
+    }, 400);
+  },
+  { once: true },
+);
