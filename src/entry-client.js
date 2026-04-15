@@ -1,20 +1,19 @@
 import "./style.css";
-import { initRouter } from "./assets/router.js";
-import { hooks, state } from "./assets/app.js";
-import { track, trackPromise, ready } from "./assets/loader.js";
-import { boot } from "./assets/boot.js";
-import { media } from "./assets/media.js";
-import { lines } from "./assets/lines.js";
-import { form } from "./assets/form.js";
-import { home } from "./assets/pages/home.js";
-import { about } from "./assets/pages/about.js";
-import { morphing } from "./assets/pages/morphing.js";
-import { slider } from "./assets/pages/slider.js";
+import { initRouter } from "./core/router.js";
+import { hooks, state } from "./core/app.js";
+import { track, trackPromise, ready } from "./core/loader.js";
+import { boot } from "./core/boot.js";
+import { media } from "./core/media.js";
+import { lines } from "./core/lines.js";
+import { form } from "./core/form.js";
+import { home } from "./pages/home.js";
+import { about } from "./pages/about.js";
+import { morphing } from "./pages/morphing.js";
+import { slider } from "./pages/slider.js";
 
-
-import { detect } from "./assets/detect.js";
-import "./assets/grid.js";
-import { initExperience } from "./assets/experience.js";
+import { detect } from "./core/detect.js";
+import "./core/grid.js";
+import { initExperience } from "./core/experience.js";
 
 await initExperience();
 
@@ -24,7 +23,7 @@ const pageModules = { "/": home, "/about": about, "/morphing": morphing, "/slide
 let scrollEngine = null;
 
 if (!detect.isMobile) {
-  const { scroll, initScroll } = await import("./assets/scroll.js");
+  const { scroll, initScroll } = await import("./core/scroll.js");
   scroll.on();
   scrollEngine = scroll.engine;
   const { page, cache } = await boot({
@@ -83,10 +82,8 @@ hooks.mount = ({ path }) => {
   state.route.current = path;
   modules.forEach((m) => m.on());
   const pm = pageModules[path];
-  if (pm) {
-    pm.init();
-    pm.on();
-  }
+  pm?.init?.();
+  pm?.on?.();
 };
 
 window.addEventListener(

@@ -18,29 +18,28 @@ if (isSSG) {
   const preloads = [
     ...fonts.map(f => `<link rel="preload" href="/${f}" as="font" type="font/woff2" crossorigin>`),
     ...cssFiles.map(f => `<link rel="preload" href="/assets/${f}" as="style" crossorigin>`),
+    '<link rel="preload" href="/render.json" as="fetch" crossorigin>',
   ].join('\n    ')
 
-  const line2 = JSON.stringify({ cache: all })
+  // render.json — single file with all routes
+  await fs.writeFile('./dist/render.json', JSON.stringify(all))
+  console.log('  ✓ render.json')
 
+  // HTML pages — pre-rendered content, no inlined NDJSON
   const indexHtml = await fs.readFile('./dist/index.html', 'utf-8')
   for (const route of routes) {
     const page = render(route)
-    const line1 = JSON.stringify({ body: page.body, title: page.title, layout })
-    const inlined = `<script id="__render__" type="application/x-ndjson">${line1}\n${line2}\n</script>`
     const html = indexHtml
-      .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n    ${inlined}\n  </head>`)
+      .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n  </head>`)
       .replace('<main id="_root"></main>', `${layout}<main id="_root">${page.body}</main>`)
     const dir = path.join('./dist', route === '/' ? '' : route)
     await fs.mkdir(dir, { recursive: true })
     await fs.writeFile(path.join(dir, 'index.html'), html)
     console.log(`  ✓ ${route}`)
   }
-  // 404.html — reconocido por vite preview y hosts estáticos
-  const page404 = render('/404')
-  const html404 = indexHtml
-    .replace('</head>', `    ${preloads}\n    <title>404</title>\n  </head>`)
-    .replace('<main id="_root"></main>', `${layout}<main id="_root">${page404.body}</main>`)
-  await fs.writeFile('./dist/404.html', html404)
+
+  // 404.html — bare page, no SPA shell
+  await fs.copyFile('./404.html', './dist/404.html')
   console.log('  ✓ /404.html')
 
   // limpiar dist/server — no necesario en SSG
@@ -172,10 +171,24 @@ function startServer() {
     if (url.searchParams.has('render')) {
       const { render, renderAll, layout } = await getModule()
       const page = render(url.pathname)
-      res.setHeader('Content-Type', 'application/x-ndjson')
+      const is404 = page.title === '404'
+      res.writeHead(is404 ? 404 : 200, { 'Content-Type': 'application/x-ndjson' })
       res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
-      setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
+      if (!is404) {
+        setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
+      } else {
+        res.end()
+      }
       return
+    }
+
+    // 404 — bare page, no SPA
+    if (url.pathname === '/404') {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
+      const page404 = isProduction
+        ? await fs.readFile('./dist/404.html', 'utf-8')
+        : await fs.readFile('./404.html', 'utf-8')
+      return res.end(page404)
     }
 
     // SPA fallback

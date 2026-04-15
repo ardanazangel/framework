@@ -7,9 +7,9 @@ import slider from "./pages/slider.html?raw";
 
 import layout from "./layout.html?raw";
 
-import { splitText } from "./assets/text-split.js";
+import { splitText } from "./core/text-split.js";
 import { projects } from "./data/projects.js";
-import { renderForm, schemas, validate } from "./assets/form.js";
+import { renderForm, schemas, validate } from "./core/form.js";
 export { schemas, validate };
 
 function injectForms(html) {
@@ -65,10 +65,13 @@ for (const p of projects) {
   };
 }
 
+const page404 = {
+  body: '<section><h1>404</h1><p>Page not found</p><a href="/">← Home</a></section>',
+  title: '404',
+}
+
 export function render(url) {
-  return (
-    processedRoutes[url]
-  );
+  return processedRoutes[url] ?? page404
 }
 
 export { layout };

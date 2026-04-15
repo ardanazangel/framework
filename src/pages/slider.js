@@ -1,5 +1,5 @@
-import { Slider } from '../slider-engine/index.js'
-import { Raf } from '../raf.js'
+import { Slider } from '../core/slider-engine/index.js'
+import { Raf } from '../core/raf.js'
 
 let core = null
 let raf = null

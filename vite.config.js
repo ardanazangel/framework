@@ -3,6 +3,13 @@ export default {
     jsx: { runtime: 'automatic' },
     exclude: [/\.html/]
   },
+  environments: {
+    ssr: {
+      build: {
+        copyPublicDir: false,
+      },
+    },
+  },
   plugins: [
     {
       name: 'minify-html',

@@ -11,6 +11,54 @@ document.head.appendChild(style);
 import { hooks } from "./app.js";
 import { streamLines } from "./boot.js";
 
+// ─── LRU cache con pin ──────────────────────────────────────────────────────
+
+const MAX_CACHED = 50
+
+class PageCache {
+  #map = new Map()   // path → data  (Map insertion order = LRU)
+  #pinned = new Set() // rutas que nunca se evictan (boot preload)
+
+  has(path) { return this.#map.has(path) }
+
+  get(path) {
+    const val = this.#map.get(path)
+    if (val === undefined) return undefined
+    // mover al final = más reciente
+    this.#map.delete(path)
+    this.#map.set(path, val)
+    return val
+  }
+
+  set(path, data) {
+    if (this.#map.has(path)) this.#map.delete(path)
+    this.#map.set(path, data)
+    this.#evict()
+  }
+
+  pin(path, data) {
+    this.#pinned.add(path)
+    this.set(path, data)
+  }
+
+  assign(obj, pinAll = false) {
+    for (const [k, v] of Object.entries(obj)) {
+      pinAll ? this.pin(k, v) : this.set(k, v)
+    }
+  }
+
+  #evict() {
+    while (this.#map.size > MAX_CACHED + this.#pinned.size) {
+      for (const key of this.#map.keys()) {
+        if (!this.#pinned.has(key)) {
+          this.#map.delete(key)
+          break
+        }
+      }
+    }
+  }
+}
+
 const getPage = () => document.querySelector(".page");
 
 const waitForAnimation = (el) =>
@@ -31,10 +79,11 @@ function wrapInPage() {
   root.appendChild(page);
 }
 
-let pages = {};
+const pages = new PageCache();
 
 async function fetchPage(path) {
-  if (pages[path]) return pages[path];
+  const cached = pages.get(path);
+  if (cached) return cached;
 
   const res = await fetch(path + "?render");
   const read = streamLines(res);
@@ -48,13 +97,13 @@ async function fetchPage(path) {
     return new Promise(() => {}); // nunca resuelve
   }
 
-  pages[path] = page;
+  pages.set(path, page);
 
   // line 2: cache en background
   next().then(({ line }) => {
     if (!line) return;
     const { cache } = JSON.parse(line);
-    Object.assign(pages, cache);
+    pages.assign(cache);
   });
 
   return page;
@@ -145,11 +194,11 @@ async function navigate(path, push = true) {
 }
 
 export function addToCache(data) {
-  Object.assign(pages, data);
+  pages.assign(data);
 }
 
 export function initRouter(preloaded = {}) {
-  Object.assign(pages, preloaded);
+  pages.assign(preloaded, true);
   wrapInPage();
 
   document.addEventListener("click", (e) => {

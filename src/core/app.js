@@ -6,7 +6,7 @@ function getWin() {
     hw: h / w,
     wh: w / h,
     semi: { w: w * 0.5, h: h * 0.5 },
-    dpr: devicePixelRatio * 2,
+    dpr: devicePixelRatio,
     isLandscape: w > h,
     isMobile: w <= 768,
   }

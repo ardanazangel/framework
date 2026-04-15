@@ -1,4 +1,4 @@
-import { THREE, Raf, scene } from "../experience.js";
+import { THREE, Raf, scene } from "../core/experience.js";
 
 let cube  = null;
 
