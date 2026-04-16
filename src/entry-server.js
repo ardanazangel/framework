@@ -40,7 +40,7 @@ const projectPage = (p) => /*html*/ `
   </section>
 `;
 
-const routes = {
+const routeConfig = {
   "/":         { html: home,     title: "Home",     type: "home",     prefetch: true },
   "/about":    { html: about,    title: "About",    type: "about",    prefetch: true },
   "/contact":  { html: contact,  title: "Contact",  type: "contact" },
@@ -49,7 +49,7 @@ const routes = {
 };
 
 const processedRoutes = Object.fromEntries(
-  Object.entries(routes).map(([url, { html, title, prefetch }]) => [
+  Object.entries(routeConfig).map(([url, { html, title, prefetch }]) => [
     url,
     {
       body: splitText(injectForms(html)),
@@ -70,7 +70,7 @@ for (const p of projects) {
 // Mapa path → tipo semántico, generado una vez al arrancar el server
 export const routes = {
   ...Object.fromEntries(
-    Object.entries(routes).map(([path, { type }]) => [path, type])
+    Object.entries(routeConfig).map(([path, { type }]) => [path, type])
   ),
   ...Object.fromEntries(projects.map(p => [`/${p.slug}`, 'project'])),
 }
