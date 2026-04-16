@@ -121,9 +121,6 @@ if (!domReady) {
 // path → nombre de tipo semántico ("home", "about", ...)
 const routeTypes = {}
 
-function pathToType(path) {
-  return path === '/' ? 'home' : path.slice(1).replace(/\//g, '_')
-}
 
 let navigating = false;
 
@@ -231,9 +228,8 @@ export function addToCache(data) {
 }
 
 export function initRouter(preloaded = {}, { routes = {} } = {}) {
-  // Construir mapa path → tipo e inicializar flags en state
-  for (const path of Object.keys(routes)) {
-    const type = pathToType(path)
+  // routes viene del server: { "/": "home", "/about": "about", ... }
+  for (const [path, type] of Object.entries(routes)) {
     routeTypes[path] = type
     state.is[type] = false
     state.was[type] = false

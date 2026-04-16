@@ -27,19 +27,19 @@ if (!detect.isMobile) {
   const { scroll, initScroll } = await import("./core/scroll-engine/scroll.js");
   scroll.on();
   scrollEngine = scroll.engine;
-  const { page, cache } = await boot({
+  const { page, cache, routes } = await boot({
     preload: pageModules[location.pathname]?.preload,
   });
   initScroll();
-  bootRouter(page, cache);
+  bootRouter(page, cache, routes);
 } else {
-  const { page, cache } = await boot({
+  const { page, cache, routes } = await boot({
     preload: pageModules[location.pathname]?.preload,
   });
-  bootRouter(page, cache);
+  bootRouter(page, cache, routes);
 }
 
-function bootRouter(page, cache) {
+function bootRouter(page, cache, routes) {
   const prefetched = new Set(
     Object.entries(cache)
       .filter(([, { prefetch }]) => prefetch)
@@ -51,7 +51,7 @@ function bootRouter(page, cache) {
       [location.pathname]: { body: page.body, title: page.title },
       ...cache,
     },
-    { routes: pageModules },
+    { routes },
   );
 
   hooks.beforeInsert = ({ path, el }) => {

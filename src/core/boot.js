@@ -25,13 +25,15 @@ export async function boot({ preload } = {}) {
   const root = document.getElementById('_root')
   const preRendered = root.children.length > 0
 
-  let page, cache = {}
+  let page, cache = {}, routes = {}
 
   if (preRendered) {
     // SSG: content already in DOM, fetch render.json for SPA cache
-    const data = await fetch('/render.json').then(r => r.json())
-    page = data[location.pathname] ?? { body: root.innerHTML, title: document.title }
-    cache = data
+    const raw = await fetch('/render.json').then(r => r.json())
+    const { __routes__: types = {}, ...pages } = raw
+    page = pages[location.pathname] ?? { body: root.innerHTML, title: document.title }
+    cache = pages
+    routes = types
   } else {
     // SSR / Dev: fetch page data via NDJSON
     const inlined = document.getElementById('__render__')
@@ -53,7 +55,7 @@ export async function boot({ preload } = {}) {
     root.innerHTML = page.body ?? ''
 
     ;({ line } = await next())
-    if (line) ({ cache } = JSON.parse(line))
+    if (line) ({ cache, routes } = JSON.parse(line))
   }
 
   // asset tracking
@@ -70,5 +72,5 @@ export async function boot({ preload } = {}) {
   }
 
   ready()
-  return { page, cache }
+  return { page, cache, routes }
 }

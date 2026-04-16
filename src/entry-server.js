@@ -41,11 +41,11 @@ const projectPage = (p) => /*html*/ `
 `;
 
 const routes = {
-  "/": { html: home, title: "Home", prefetch: true },
-  "/about": { html: about, title: "About", prefetch: true },
-  "/contact": { html: contact, title: "Contact" },
-  "/morphing": { html: morphing, title: "Morphing" },
-  "/slider": { html: slider, title: "Slider" },
+  "/":         { html: home,     title: "Home",     type: "home",     prefetch: true },
+  "/about":    { html: about,    title: "About",    type: "about",    prefetch: true },
+  "/contact":  { html: contact,  title: "Contact",  type: "contact" },
+  "/morphing": { html: morphing, title: "Morphing", type: "morphing" },
+  "/slider":   { html: slider,   title: "Slider",   type: "slider" },
 };
 
 const processedRoutes = Object.fromEntries(
@@ -65,6 +65,14 @@ for (const p of projects) {
     title: p.title,
     prefetch: true,
   };
+}
+
+// Mapa path → tipo semántico, generado una vez al arrancar el server
+export const routes = {
+  ...Object.fromEntries(
+    Object.entries(routes).map(([path, { type }]) => [path, type])
+  ),
+  ...Object.fromEntries(projects.map(p => [`/${p.slug}`, 'project'])),
 }
 
 const page404 = {

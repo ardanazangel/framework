@@ -8,9 +8,9 @@ const isProduction = process.env.NODE_ENV === 'production'
 const isSSG = process.argv.includes('--ssg')
 
 if (isSSG) {
-  const { render, renderAll, layout } = await import('./dist/server/entry-server.js')
+  const { render, renderAll, routes: routeTypeMap, layout } = await import('./dist/server/entry-server.js')
   const all = renderAll()
-  const routes = Object.keys(all)
+  const routeKeys = Object.keys(all)
 
   const distAssets = await fs.readdir('./dist/assets')
   const cssFiles = distAssets.filter(f => f.endsWith('.css'))
@@ -21,13 +21,13 @@ if (isSSG) {
     '<link rel="preload" href="/render.json" as="fetch" crossorigin>',
   ].join('\n    ')
 
-  // render.json — single file with all routes
-  await fs.writeFile('./dist/render.json', JSON.stringify(all))
+  // render.json — single file con todas las rutas + mapa de tipos
+  await fs.writeFile('./dist/render.json', JSON.stringify({ ...all, __routes__: routeTypeMap }))
   console.log('  ✓ render.json')
 
   // HTML pages — pre-rendered content, no inlined NDJSON
   const indexHtml = await fs.readFile('./dist/index.html', 'utf-8')
-  for (const route of routes) {
+  for (const route of routeKeys) {
     const page = render(route)
     const html = indexHtml
       .replace('</head>', `    ${preloads}\n    <title>${page.title}</title>\n  </head>`)
@@ -169,13 +169,13 @@ function startServer() {
     }
 
     if (url.searchParams.has('render')) {
-      const { render, renderAll, layout } = await getModule()
+      const { render, renderAll, routes: routeTypeMap, layout } = await getModule()
       const page = render(url.pathname)
       const is404 = page.title === '404'
       res.writeHead(is404 ? 404 : 200, { 'Content-Type': 'application/x-ndjson' })
       res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
       if (!is404) {
-        setImmediate(() => res.end(JSON.stringify({ cache: renderAll() }) + '\n'))
+        setImmediate(() => res.end(JSON.stringify({ cache: renderAll(), routes: routeTypeMap }) + '\n'))
       } else {
         res.end()
       }
