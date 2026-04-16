@@ -172,12 +172,11 @@ function startServer() {
       const { render, renderAll, routes: routeTypeMap, layout } = await getModule()
       const page = render(url.pathname)
       const is404 = page.title === '404'
-      res.writeHead(is404 ? 404 : 200, { 'Content-Type': 'application/x-ndjson' })
-      res.write(JSON.stringify({ body: page.body, title: page.title, layout }) + '\n')
-      if (!is404) {
-        setImmediate(() => res.end(JSON.stringify({ cache: renderAll(), routes: routeTypeMap }) + '\n'))
+      res.writeHead(is404 ? 404 : 200, { 'Content-Type': 'application/json' })
+      if (is404) {
+        res.end(JSON.stringify({ body: page.body, title: page.title, layout }))
       } else {
-        res.end()
+        res.end(JSON.stringify({ body: page.body, title: page.title, layout, cache: renderAll(), routes: routeTypeMap }))
       }
       return
     }

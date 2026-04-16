@@ -9,7 +9,6 @@ style.textContent = /* css */`
 document.head.appendChild(style);
 
 import { hooks, state } from "./app.js";
-import { streamLines } from "./boot.js";
 
 // ─── LRU cache con pin ──────────────────────────────────────────────────────
 
@@ -85,28 +84,17 @@ async function fetchPage(path) {
   const cached = pages.get(path);
   if (cached) return cached;
 
-  const res = await fetch(path + "?render");
-  const read = streamLines(res);
+  const data = await fetch(path + "?render").then(r => r.json());
 
-  // line 1: page data
-  const { line, read: next } = await read();
-  const page = JSON.parse(line);
-
-  if (page.title === "404") {
+  if (data.title === "404") {
     location.replace("/404");
-    return new Promise(() => {}); // nunca resuelve
+    return new Promise(() => {});
   }
 
-  pages.set(path, page);
+  pages.set(path, data);
+  pages.assign(data.cache ?? {});
 
-  // line 2: cache en background
-  next().then(({ line }) => {
-    if (!line) return;
-    const { cache } = JSON.parse(line);
-    pages.assign(cache);
-  });
-
-  return page;
+  return data;
 }
 
 // Fix 3: ignorar popstate si el documento no terminó de cargar

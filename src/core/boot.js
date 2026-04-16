@@ -1,26 +1,5 @@
 import { track, trackPromise, ready } from './loader.js'
 
-export function streamLines(response) {
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buf = ''
-
-  async function readLine() {
-    while (true) {
-      const { value, done } = await reader.read()
-      buf += decoder.decode(value ?? new Uint8Array(), { stream: !done })
-      const nl = buf.indexOf('\n')
-      if (nl !== -1 || done) {
-        const line = buf.slice(0, nl === -1 ? buf.length : nl)
-        buf = nl === -1 ? '' : buf.slice(nl + 1)
-        return { line, read: readLine }
-      }
-    }
-  }
-
-  return readLine
-}
-
 export async function boot({ preload } = {}) {
   const root = document.getElementById('_root')
   const preRendered = root.children.length > 0
@@ -28,34 +7,30 @@ export async function boot({ preload } = {}) {
   let page, cache = {}, routes = {}
 
   if (preRendered) {
-    // SSG: content already in DOM, fetch render.json for SPA cache
+    // SSG: contenido ya en el DOM, fetch render.json para cache SPA
     const raw = await fetch('/render.json').then(r => r.json())
     const { __routes__: types = {}, ...pages } = raw
     page = pages[location.pathname] ?? { body: root.innerHTML, title: document.title }
     cache = pages
     routes = types
   } else {
-    // SSR / Dev: fetch page data via NDJSON
+    // SSR / Dev: fetch JSON con toda la data de una vez
     const inlined = document.getElementById('__render__')
-    const res = inlined
-      ? new Response(inlined.textContent, { headers: { 'content-type': 'application/x-ndjson' } })
-      : await fetch(location.pathname + '?render')
-    const read = streamLines(res)
+    const data = inlined
+      ? JSON.parse(inlined.textContent)
+      : await fetch(location.pathname + '?render').then(r => r.json())
 
-    let { line, read: next } = await read()
-    page = JSON.parse(line)
-
-    if (page.title === '404') {
+    if (data.title === '404') {
       location.replace('/404')
       return new Promise(() => {})
     }
 
-    document.body.insertAdjacentHTML('afterbegin', page.layout)
-    document.title = page.title
-    root.innerHTML = page.body ?? ''
-
-    ;({ line } = await next())
-    if (line) ({ cache, routes } = JSON.parse(line))
+    document.body.insertAdjacentHTML('afterbegin', data.layout)
+    document.title = data.title
+    root.innerHTML = data.body ?? ''
+    cache = data.cache ?? {}
+    routes = data.routes ?? {}
+    page = data
   }
 
   // asset tracking
@@ -63,7 +38,7 @@ export async function boot({ preload } = {}) {
   track([...root.querySelectorAll('video[src]')].map(v => v.src), 'video')
   if (preload) trackPromise(...preload())
 
-  // prefetch tracking from cache
+  // prefetch tracking desde cache
   for (const [path, { body, prefetch }] of Object.entries(cache)) {
     if (!prefetch || path === location.pathname) continue
     const doc = new DOMParser().parseFromString(body, 'text/html')
