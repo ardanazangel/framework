@@ -1,41 +1,41 @@
-import { THREE, Raf, scene } from "../core/experience.js";
+import { THREE, Raf, scene, camera, renderer } from "../core/three-engine/index.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-let cube  = null;
+let controls = null;
 
-const loader = new THREE.TextureLoader();
-
-const raf = new Raf((delta) => {
-  if (!cube) return;
-  cube.rotation.x += 0.6 * delta;
-  cube.rotation.y += 0.6 * delta;
+const raf = new Raf(() => {
+  controls?.update();
 });
 
+let plane = null;
+
 export const home = {
-  preload() {
-    return [loader.loadAsync('/test.jpg')];
-  },
+  preload() { return []; },
 
   init() {
-    // Three.js
-    const texture = loader.load('/test.jpg');
-    cube = new THREE.Mesh(
-      new THREE.BoxGeometry(),
-      new THREE.MeshBasicMaterial({ map: texture }),
+    plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 1.5),
+      new THREE.MeshNormalMaterial({ side: THREE.DoubleSide }),
     );
-    scene.add(cube);
+    scene.add(plane);
 
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    raf.run();
   },
 
-  on()  { raf.run(); },
-  off() {  },
+  on() { },
+  off() { },
 
   destroy() {
-    if (cube) {
-      scene.remove(cube);
-      cube.material.map?.dispose();
-      cube.material.dispose();
-      cube.geometry.dispose();
-      cube = null;
-    }
+    raf.stop();
+    controls?.dispose();
+    controls = null;
+
+    if (!plane) return;
+    scene.remove(plane);
+    plane.material.dispose();
+    plane.geometry.dispose();
+    plane = null;
   },
-};
+};                   

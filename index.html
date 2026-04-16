@@ -96,16 +96,6 @@
         opacity: 1;
       }
 
-      canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100dvh;
-        z-index: 1;
-        pointer-events: none;
-      }
-
       .page {
         background-color: #f2f2f2;
         height: fit-content;
@@ -186,7 +176,6 @@
     </div>
     <grid-layout count="12"></grid-layout>
     <main id="_root"></main>
-    <canvas></canvas>
     <script>
       const el = document.getElementById("load-number");
       el.textContent = "0";

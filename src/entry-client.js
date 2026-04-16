@@ -12,7 +12,7 @@ import { morphing } from "./pages/morphing.js";
 import { slider } from "./pages/slider.js";
 
 import { detect } from "./core/utils/detect.js";
-import { initExperience } from "./core/experience.js";
+import { initExperience } from "./core/three-engine/index.js";
 
 if (import.meta.env.DEV) import('./core/utils/grid.js')
 
@@ -90,9 +90,7 @@ hooks.mount = ({ path }) => {
 window.addEventListener(
   "loader:complete",
   () => {
-    setTimeout(() => {
-      hooks.mount?.({ path: location.pathname });
-    }, 400);
+    hooks.mount?.({ path: location.pathname });
   },
   { once: true },
 );

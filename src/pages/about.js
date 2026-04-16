@@ -1,4 +1,4 @@
-import { THREE, Raf, scene } from "../core/experience.js";
+import { THREE, Raf, scene } from "../core/three-engine/index.js";
 
 let sphere = null;
 

@@ -1,5 +1,5 @@
 const style = document.createElement("style");
-style.textContent = `
+style.textContent = /* css */`
   @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10%) } }
   @keyframes page-in  { from { clip-path: polygon(0% 100vh, 100% 100vh, 100% 100vh, 0% 100vh); } }
   .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
