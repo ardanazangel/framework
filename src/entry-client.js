@@ -46,10 +46,13 @@ function bootRouter(page, cache) {
       .map(([path]) => path),
   );
 
-  initRouter({
-    [location.pathname]: { body: page.body, title: page.title },
-    ...cache,
-  });
+  initRouter(
+    {
+      [location.pathname]: { body: page.body, title: page.title },
+      ...cache,
+    },
+    { routes: pageModules },
+  );
 
   hooks.beforeInsert = ({ path, el }) => {
     if (prefetched.has(path)) {

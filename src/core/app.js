@@ -19,6 +19,11 @@ export const state = {
     current: null,
     previous: null,
   },
+  // Flags semánticos por tipo de página — actualizados por el router
+  // is.home = true mientras home es la página activa
+  // was.home = true si home fue la página anterior (se limpia en cada navegación)
+  is: {},
+  was: {},
   scroll: 0,
   win: getWin(),
 }

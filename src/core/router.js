@@ -8,7 +8,7 @@ style.textContent = /* css */`
 `;
 document.head.appendChild(style);
 
-import { hooks } from "./app.js";
+import { hooks, state } from "./app.js";
 import { streamLines } from "./boot.js";
 
 // ─── LRU cache con pin ──────────────────────────────────────────────────────
@@ -109,11 +109,44 @@ async function fetchPage(path) {
   return page;
 }
 
+// Fix 3: ignorar popstate si el documento no terminó de cargar
+// (e.g. restauración de sesión del browser antes de DOMContentLoaded)
+let domReady = document.readyState === 'complete'
+if (!domReady) {
+  window.addEventListener('load', () => {
+    setTimeout(() => { domReady = true }, 0)
+  }, { once: true })
+}
+
+// path → nombre de tipo semántico ("home", "about", ...)
+const routeTypes = {}
+
+function pathToType(path) {
+  return path === '/' ? 'home' : path.slice(1).replace(/\//g, '_')
+}
+
 let navigating = false;
 
 async function navigate(path, push = true) {
   if (navigating) return;
   navigating = true;
+
+  // Fix 2: snapshot de UI antes de que empiece cualquier cambio
+  // El scroll engine y cualquier página escuchan "route:save" para guardar su estado
+  window.dispatchEvent(new CustomEvent('route:save', {
+    detail: { path: location.pathname }
+  }))
+
+  // Fix 1: actualizar flags is/was
+  const prevType = routeTypes[location.pathname]
+  const nextType = routeTypes[path]
+  // Limpiar todos los was — solo uno puede ser true a la vez
+  for (const type of Object.values(routeTypes)) state.was[type] = false
+  if (prevType) {
+    state.is[prevType] = false
+    state.was[prevType] = true
+  }
+  if (nextType) state.is[nextType] = true
 
   window.dispatchEvent(new CustomEvent("loader:start"));
 
@@ -197,7 +230,18 @@ export function addToCache(data) {
   pages.assign(data);
 }
 
-export function initRouter(preloaded = {}) {
+export function initRouter(preloaded = {}, { routes = {} } = {}) {
+  // Construir mapa path → tipo e inicializar flags en state
+  for (const path of Object.keys(routes)) {
+    const type = pathToType(path)
+    routeTypes[path] = type
+    state.is[type] = false
+    state.was[type] = false
+  }
+  // Marcar la página actual como activa
+  const currentType = routeTypes[location.pathname]
+  if (currentType) state.is[currentType] = true
+
   pages.assign(preloaded, true);
   wrapInPage();
 
@@ -212,7 +256,9 @@ export function initRouter(preloaded = {}) {
     navigate(a.pathname);
   });
 
-  window.addEventListener("popstate", () =>
+  // Fix 3: ignorar popstate durante carga inicial
+  window.addEventListener("popstate", () => {
+    if (!domReady) return
     navigate(location.pathname, false)
-  );
+  });
 }
