@@ -2,7 +2,7 @@
 var home_default = "<section id=\"home-wrapper\">\n  <h1 class=\"chars\"><span>Fwk*</span><br /><span>26'</span></h1>\n  <div class=\"paragraph\">\n    <p class=\"lines\">\n      Lightweight SPA framework for Vite with a single-page entry and simple\n      client-side routing.\n    </p>\n  </div>\n</section>\n";
 //#endregion
 //#region src/pages/about.html?raw
-var about_default = "<section class=\"hero\">\n  <h1 class=\"chars\">About <a href=\"\">testing</a></h1>\n  <p class=\"lines\">\n    A minimal SPA framework built for creative devs who want full control\n    over motion, scroll, and Three.js — without the overhead.\n  </p>\n</section>\n\n<section class=\"intro\">\n  <h2 class=\"chars\">Philosophy</h2>\n  <p class=\"lines\">\n    One RAF loop. One renderer. Sections that know where they live.\n    No wrappers, no virtual DOM, no magic. Just code you can read.\n    The scroll engine is 60 lines. The RAF is 15. The router is 150.\n    Every piece is replaceable.\n  </p>\n  <p class=\"lines\" style=\"margin-top:2rem;\">\n    We believe frameworks should disappear into the project.\n    Not the other way around.\n  </p>\n</section>\n\n<section class=\"stack\">\n  <h2 class=\"chars\">Stack</h2>\n  <ul>\n    <li>Vite + vanilla JS/TS — no build magic you can't explain</li>\n    <li>Three.js WebGPU — one renderer, per-page scenes, shared camera</li>\n    <li>Custom fake-scroll engine — damp frame-rate independent, virtualized sections</li>\n    <li>SSR / SSG via NDJSON streaming — body first, cache second</li>\n    <li>SPA router — clip-path transitions, prefetch, 15s safety valve</li>\n    <li>Loader — tracks images + Three.js textures, numeric progress</li>\n  </ul>\n</section>\n\n<section class=\"principles\">\n  <h2 class=\"chars\">Principles</h2>\n  <p class=\"lines\" >\n    No abstraction without a reason. No dependency you didn't choose.\n    No lifecycle you can't follow by reading entry-client.js top to bottom.\n  </p>\n  <p class=\"lines\">\n    The scroll engine doesn't know about Three.js.\n    Three.js doesn't know about the router.\n    The router doesn't know about scroll.\n    Each piece does one thing.\n  </p>\n  <p class=\"lines\">\n    When something breaks, you know where to look.\n  </p>\n</section>\n\n<section class=\"footer\">\n  <h2 class=\"chars\">Built in 2026</h2>\n  <p class=\"lines\">\n    No dependencies you didn't ask for.\n    No conventions you can't override.\n    No magic you can't delete.\n  </p>\n  <a href=\"/\">← Home</a>\n</section>\n";
+var about_default = "<section class=\"hero\">\n  <h1 class=\"chars\">About <a href=\"\">testing</a></h1>\n  <p class=\"lines\">\n    A minimal SPA framework built for creative devs who want full control\n    over motion, scroll, and Three.js — without the overhead.\n  </p>\n</section>\n\n<section class=\"faq\">\n  <div class=\"accordion\">\n\n    <div class=\"accordion-item\">\n      <button class=\"accordion-trigger\">Philosophy</button>\n      <div class=\"accordion-panel\">\n        <p>\n          One RAF loop. One renderer. Sections that know where they live.\n          No wrappers, no virtual DOM, no magic. Just code you can read.\n          The scroll engine is 60 lines. The RAF is 15. The router is 150.\n          Every piece is replaceable.\n        </p>\n        <p>\n          We believe frameworks should disappear into the project.\n          Not the other way around.\n        </p>\n      </div>\n    </div>\n\n    <div class=\"accordion-item\">\n      <button class=\"accordion-trigger\">Stack</button>\n      <div class=\"accordion-panel\">\n        <ul>\n          <li>Vite + vanilla JS/TS — no build magic you can't explain</li>\n          <li>Three.js WebGPU — one renderer, per-page scenes, shared camera</li>\n          <li>Custom fake-scroll engine — damp frame-rate independent, virtualized sections</li>\n          <li>SSR / SSG via NDJSON streaming — body first, cache second</li>\n          <li>SPA router — clip-path transitions, prefetch, 15s safety valve</li>\n          <li>Loader — tracks images + Three.js textures, numeric progress</li>\n        </ul>\n      </div>\n    </div>\n\n    <div class=\"accordion-item\">\n      <button class=\"accordion-trigger\">Principles</button>\n      <div class=\"accordion-panel\">\n        <p>\n          No abstraction without a reason. No dependency you didn't choose.\n          No lifecycle you can't follow by reading entry-client.js top to bottom.\n        </p>\n        <p>\n          The scroll engine doesn't know about Three.js.\n          Three.js doesn't know about the router.\n          The router doesn't know about scroll.\n          Each piece does one thing.\n        </p>\n        <p>\n          When something breaks, you know where to look.\n        </p>\n      </div>\n    </div>\n\n    <div class=\"accordion-item\">\n      <button class=\"accordion-trigger\">Built in 2026</button>\n      <div class=\"accordion-panel\">\n        <p>\n          No dependencies you didn't ask for.\n          No conventions you can't override.\n          No magic you can't delete.\n        </p>\n        <a href=\"/\">← Home</a>\n      </div>\n    </div>\n\n  </div>\n</section>\n";
 //#endregion
 //#region src/pages/contact.html?raw
 var contact_default = "<section class=\"container\">\n  <h1 class=\"chars\">Contact</h1>\n  <form data-form=\"contact\" class=\"form\" novalidate></form>\n  <a href=\"/\">Home</a>\n</section>\n";
@@ -459,14 +459,12 @@ var routeConfig = {
 	"/": {
 		html: home_default,
 		title: "Home",
-		type: "home",
-		prefetch: true
+		type: "home"
 	},
 	"/about": {
 		html: about_default,
 		title: "About",
-		type: "about",
-		prefetch: true
+		type: "about"
 	},
 	"/contact": {
 		html: contact_default,
@@ -484,15 +482,13 @@ var routeConfig = {
 		type: "slider"
 	}
 };
-var processedRoutes = Object.fromEntries(Object.entries(routeConfig).map(([url, { html, title, prefetch }]) => [url, {
+var processedRoutes = Object.fromEntries(Object.entries(routeConfig).map(([url, { html, title }]) => [url, {
 	body: splitText(injectForms(html)),
-	title,
-	...prefetch && { prefetch }
+	title
 }]));
 for (const p of projects) processedRoutes[`/${p.slug}`] = {
 	body: splitText(projectPage(p)),
-	title: p.title,
-	prefetch: true
+	title: p.title
 };
 var routes = {
 	...Object.fromEntries(Object.entries(routeConfig).map(([path, { type }]) => [path, type])),
