@@ -6,55 +6,69 @@
   </p>
 </section>
 
-<section class="intro">
-  <h2 class="chars">Philosophy</h2>
-  <p class="lines">
-    One RAF loop. One renderer. Sections that know where they live.
-    No wrappers, no virtual DOM, no magic. Just code you can read.
-    The scroll engine is 60 lines. The RAF is 15. The router is 150.
-    Every piece is replaceable.
-  </p>
-  <p class="lines" style="margin-top:2rem;">
-    We believe frameworks should disappear into the project.
-    Not the other way around.
-  </p>
-</section>
+<section class="faq">
+  <div class="accordion">
 
-<section class="stack">
-  <h2 class="chars">Stack</h2>
-  <ul>
-    <li>Vite + vanilla JS/TS — no build magic you can't explain</li>
-    <li>Three.js WebGPU — one renderer, per-page scenes, shared camera</li>
-    <li>Custom fake-scroll engine — damp frame-rate independent, virtualized sections</li>
-    <li>SSR / SSG via NDJSON streaming — body first, cache second</li>
-    <li>SPA router — clip-path transitions, prefetch, 15s safety valve</li>
-    <li>Loader — tracks images + Three.js textures, numeric progress</li>
-  </ul>
-</section>
+    <div class="accordion-item">
+      <button class="accordion-trigger">Philosophy</button>
+      <div class="accordion-panel">
+        <p>
+          One RAF loop. One renderer. Sections that know where they live.
+          No wrappers, no virtual DOM, no magic. Just code you can read.
+          The scroll engine is 60 lines. The RAF is 15. The router is 150.
+          Every piece is replaceable.
+        </p>
+        <p>
+          We believe frameworks should disappear into the project.
+          Not the other way around.
+        </p>
+      </div>
+    </div>
 
-<section class="principles">
-  <h2 class="chars">Principles</h2>
-  <p class="lines" >
-    No abstraction without a reason. No dependency you didn't choose.
-    No lifecycle you can't follow by reading entry-client.js top to bottom.
-  </p>
-  <p class="lines">
-    The scroll engine doesn't know about Three.js.
-    Three.js doesn't know about the router.
-    The router doesn't know about scroll.
-    Each piece does one thing.
-  </p>
-  <p class="lines">
-    When something breaks, you know where to look.
-  </p>
-</section>
+    <div class="accordion-item">
+      <button class="accordion-trigger">Stack</button>
+      <div class="accordion-panel">
+        <ul>
+          <li>Vite + vanilla JS/TS — no build magic you can't explain</li>
+          <li>Three.js WebGPU — one renderer, per-page scenes, shared camera</li>
+          <li>Custom fake-scroll engine — damp frame-rate independent, virtualized sections</li>
+          <li>SSR / SSG via NDJSON streaming — body first, cache second</li>
+          <li>SPA router — clip-path transitions, prefetch, 15s safety valve</li>
+          <li>Loader — tracks images + Three.js textures, numeric progress</li>
+        </ul>
+      </div>
+    </div>
 
-<section class="footer">
-  <h2 class="chars">Built in 2026</h2>
-  <p class="lines">
-    No dependencies you didn't ask for.
-    No conventions you can't override.
-    No magic you can't delete.
-  </p>
-  <a href="/">← Home</a>
+    <div class="accordion-item">
+      <button class="accordion-trigger">Principles</button>
+      <div class="accordion-panel">
+        <p>
+          No abstraction without a reason. No dependency you didn't choose.
+          No lifecycle you can't follow by reading entry-client.js top to bottom.
+        </p>
+        <p>
+          The scroll engine doesn't know about Three.js.
+          Three.js doesn't know about the router.
+          The router doesn't know about scroll.
+          Each piece does one thing.
+        </p>
+        <p>
+          When something breaks, you know where to look.
+        </p>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger">Built in 2026</button>
+      <div class="accordion-panel">
+        <p>
+          No dependencies you didn't ask for.
+          No conventions you can't override.
+          No magic you can't delete.
+        </p>
+        <a href="/">← Home</a>
+      </div>
+    </div>
+
+  </div>
 </section>
