@@ -41,20 +41,19 @@ const projectPage = (p) => /*html*/ `
 `;
 
 const routeConfig = {
-  "/":         { html: home,     title: "Home",     type: "home",     prefetch: true },
-  "/about":    { html: about,    title: "About",    type: "about",    prefetch: true },
-  "/contact":  { html: contact,  title: "Contact",  type: "contact" },
+  "/":         { html: home,     title: "Home",     type: "home"     },
+  "/about":    { html: about,    title: "About",    type: "about"    },
+  "/contact":  { html: contact,  title: "Contact",  type: "contact"  },
   "/morphing": { html: morphing, title: "Morphing", type: "morphing" },
-  "/slider":   { html: slider,   title: "Slider",   type: "slider" },
+  "/slider":   { html: slider,   title: "Slider",   type: "slider"   },
 };
 
 const processedRoutes = Object.fromEntries(
-  Object.entries(routeConfig).map(([url, { html, title, prefetch }]) => [
+  Object.entries(routeConfig).map(([url, { html, title }]) => [
     url,
     {
       body: splitText(injectForms(html)),
       title,
-      ...(prefetch && { prefetch }),
     },
   ]),
 );
@@ -63,7 +62,6 @@ for (const p of projects) {
   processedRoutes[`/${p.slug}`] = {
     body: splitText(projectPage(p)),
     title: p.title,
-    prefetch: true,
   };
 }
 

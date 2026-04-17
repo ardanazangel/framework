@@ -2,12 +2,15 @@ import { THREE, Raf, scene, camera, renderer } from "../core/three-engine/index.
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 let controls = null;
+let plane = null;
 
 const raf = new Raf(() => {
+  plane.rotation.x += 0.01;
+  plane.rotation.y += 0.01;
+
   controls?.update();
 });
 
-let plane = null;
 
 export const home = {
   preload() { return []; },

@@ -6,10 +6,7 @@ import { boot } from "./core/boot.js";
 import { media } from "./core/utils/media.js";
 import { lines } from "./core/split-engine/lines-split.js";
 import { form } from "./core/form-engine/hydrate.js";
-import { home } from "./pages/home.js";
-import { about } from "./pages/about.js";
-import { morphing } from "./pages/morphing.js";
-import { slider } from "./pages/slider.js";
+import { PREFETCH_TYPES, pageModules } from "./config.js";
 
 import { detect } from "./core/utils/detect.js";
 import { initExperience } from "./core/three-engine/index.js";
@@ -19,7 +16,6 @@ if (import.meta.env.DEV) import('./core/utils/grid.js')
 await initExperience();
 
 const modules = [media, lines, form];
-const pageModules = { "/": home, "/about": about, "/morphing": morphing, "/slider": slider };
 
 let scrollEngine = null;
 
@@ -41,8 +37,8 @@ if (!detect.isMobile) {
 
 function bootRouter(page, cache, routes) {
   const prefetched = new Set(
-    Object.entries(cache)
-      .filter(([, { prefetch }]) => prefetch)
+    Object.entries(routes)
+      .filter(([path, type]) => PREFETCH_TYPES.has(type) && cache[path])
       .map(([path]) => path),
   );
 

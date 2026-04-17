@@ -1,4 +1,5 @@
 import { track, trackPromise, ready } from './loader.js'
+import { PREFETCH_TYPES } from '../config.js'
 
 export async function boot({ preload } = {}) {
   const root = document.getElementById('_root')
@@ -38,9 +39,9 @@ export async function boot({ preload } = {}) {
   track([...root.querySelectorAll('video[src]')].map(v => v.src), 'video')
   if (preload) trackPromise(...preload())
 
-  // prefetch tracking desde cache
-  for (const [path, { body, prefetch }] of Object.entries(cache)) {
-    if (!prefetch || path === location.pathname) continue
+  // prefetch tracking desde cache — se decide por tipo de ruta
+  for (const [path, { body }] of Object.entries(cache)) {
+    if (!PREFETCH_TYPES.has(routes[path]) || path === location.pathname) continue
     const doc = new DOMParser().parseFromString(body, 'text/html')
     track([...doc.querySelectorAll('img[src]')].map(img => img.src))
     track([...doc.querySelectorAll('video[src]')].map(v => v.getAttribute('src')), 'video')
