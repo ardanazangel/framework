@@ -140,7 +140,7 @@ export class Accordion {
     item.panel.style.overflow = 'hidden'
     item.targetH = item.naturalH
     item.state   = 'opening'
-    item.el.classList.add('accordion-item--open')
+    item.el.classList.add('open')
     item.trigger.setAttribute('aria-expanded', 'true')
     this.config.onOpen?.(index)
   }
@@ -210,7 +210,7 @@ export class Accordion {
     for (const item of this.#items) {
       item.panel.style.height   = ''
       item.panel.style.overflow = ''
-      item.el.classList.remove('accordion-item--open')
+      item.el.classList.remove('open')
       item.trigger.removeAttribute('aria-expanded')
     }
 

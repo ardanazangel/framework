@@ -13,7 +13,6 @@ let locked = false
 
 function clamp(v) { return _clamp(v, 0, max) }
 
-// wheel
 window.addEventListener('wheel', (e) => {
   e.preventDefault()
   if (!locked) tar = clamp(tar + e.deltaY)

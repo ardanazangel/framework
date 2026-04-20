@@ -5,7 +5,7 @@ import { Raf } from "../utils/raf.js";
 
 export { THREE, Raf };
 
-export const camera = new THREE.PerspectiveCamera(75, state.win.wh, 0.1, 1000);
+export const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 camera.position.z = 5;
 
 export const scene = new THREE.Scene();
@@ -17,26 +17,23 @@ const raf = new Raf(() => {
 
 export async function initExperience() {
   const canvas = document.createElement("canvas");
-  Object.assign(canvas.style, { position: "fixed", width: "100vw", height: "100vh", top: "0", left: "0", zIndex:"1" }); 
+  Object.assign(canvas.style, { position: "fixed", width: "100vw", height: "100vh", top: "0", left: "0", zIndex: "1" });
   document.body.appendChild(canvas);
 
   renderer = new WebGPURenderer({ canvas, antialias: true, alpha: true });
   await renderer.init();
 
-  renderer.setSize(state.win.w, state.win.h);
   renderer.setPixelRatio(state.win.dpr);
   renderer.setClearColor(0x000000, 0);
 
+  resize(state.win);
   raf.run();
 
-  let resizeTimeout;
+  window.addEventListener("win:resize", ({ detail: win }) => resize(win));
+}
 
-  window.addEventListener("win:resize", ({ detail: win }) => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      camera.aspect = win.wh;
-      camera.updateProjectionMatrix();
-      renderer.setSize(win.w, win.h);
-    }, 100);
-  });
+function resize(win) {
+  camera.aspect = win.wh;
+  camera.updateProjectionMatrix();
+  renderer.setSize(win.w, win.h);
 }

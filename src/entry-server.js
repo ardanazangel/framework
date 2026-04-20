@@ -41,11 +41,18 @@ const projectPage = (p) => /*html*/ `
 `;
 
 const routeConfig = {
-  "/":         { html: home,     title: "Home",     type: "home"     },
-  "/about":    { html: about,    title: "About",    type: "about"    },
-  "/contact":  { html: contact,  title: "Contact",  type: "contact"  },
+  "/": { html: home, title: "Home", type: "home" },
+  "/about": { html: about, title: "About", type: "about" },
+  "/contact": { html: contact, title: "Contact", type: "contact" },
   "/morphing": { html: morphing, title: "Morphing", type: "morphing" },
-  "/slider":   { html: slider,   title: "Slider",   type: "slider"   },
+  "/slider": { html: slider, title: "Slider", type: "slider" },
+  ...Object.fromEntries(
+    projects.map(p => [`/${p.slug}`, {
+      html: projectPage(p),
+      title: p.title,
+      type: "project",
+    }])
+  ),
 };
 
 const processedRoutes = Object.fromEntries(
@@ -58,20 +65,10 @@ const processedRoutes = Object.fromEntries(
   ]),
 );
 
-for (const p of projects) {
-  processedRoutes[`/${p.slug}`] = {
-    body: splitText(projectPage(p)),
-    title: p.title,
-  };
-}
-
 // Mapa path → tipo semántico, generado una vez al arrancar el server
-export const routes = {
-  ...Object.fromEntries(
-    Object.entries(routeConfig).map(([path, { type }]) => [path, type])
-  ),
-  ...Object.fromEntries(projects.map(p => [`/${p.slug}`, 'project'])),
-}
+export const routes = Object.fromEntries(
+  Object.entries(routeConfig).map(([path, { type }]) => [path, type])
+);
 
 const page404 = {
   body: '<section><h1>404</h1><p>Page not found</p><a href="/">← Home</a></section>',
