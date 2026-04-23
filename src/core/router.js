@@ -2,7 +2,8 @@ const style = document.createElement("style");
 style.textContent = /* css */`
   @keyframes page-out { to   { filter: brightness(0.2); scale: 0.9; transform: translateY(-10%) } }
   @keyframes page-in  { from { clip-path: polygon(0% 100vh, 100% 100vh, 100% 100vh, 0% 100vh); } }
-  .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
+  .page     { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+  .page-content { will-change: transform; }
   .page-out { animation: page-out 1.2s forwards var(--io4); z-index: 0; transition: none;}
   .page-in  { animation: page-in  1.2s forwards var(--io4); z-index: 10; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; }
 `;
@@ -70,12 +71,24 @@ const waitForLoader = () =>
     window.addEventListener("loader:complete", () => res(), { once: true })
   );
 
+function wrapContent(page) {
+  let content = page.querySelector(':scope > .page-content')
+  if (!content) {
+    content = document.createElement('div')
+    content.className = 'page-content'
+    content.append(...page.childNodes)
+    page.appendChild(content)
+  }
+  return content
+}
+
 function wrapInPage() {
   const root = document.querySelector("#_root");
   const page = document.createElement("div");
   page.className = "page";
   page.append(...root.childNodes);
   root.appendChild(page);
+  wrapContent(page);
 }
 
 const pages = new PageCache();
@@ -186,7 +199,9 @@ async function navigate(path, push = true) {
 
   window.dispatchEvent(new CustomEvent("scroll:reset"));
 
+  wrapContent(newPage);
   document.querySelector("#_root").appendChild(newPage);
+  window.dispatchEvent(new CustomEvent("transition:start"));
 
   if (push) history.pushState({}, "", path);
 

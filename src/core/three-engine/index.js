@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { WebGPURenderer } from "three/webgpu";
 import { state } from "../app.js";
 import { Raf } from "../utils/raf.js";
 
@@ -9,6 +8,7 @@ export const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 camera.position.z = 5;
 
 export const scene = new THREE.Scene();
+scene.add(camera); // necesario para que Fullscreen de uikit encuentre la cámara
 export let renderer = null;
 
 const raf = new Raf(() => {
@@ -20,9 +20,7 @@ export async function initExperience() {
   Object.assign(canvas.style, { position: "fixed", width: "100vw", height: "100vh", top: "0", left: "0", zIndex: "1" });
   document.body.appendChild(canvas);
 
-  renderer = new WebGPURenderer({ canvas, antialias: true, alpha: true });
-  await renderer.init();
-
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(state.win.dpr);
   renderer.setClearColor(0x000000, 0);
 

@@ -1,4 +1,10 @@
-import { THREE, Raf, scene, camera, renderer } from "../core/three-engine/index.js";
+import {
+  THREE,
+  Raf,
+  scene,
+  camera,
+  renderer,
+} from "../core/three-engine/index.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 let controls = null;
@@ -11,9 +17,10 @@ const raf = new Raf(() => {
   controls?.update();
 });
 
-
 export const home = {
-  preload() { return []; },
+  preload() {
+    return [];
+  },
 
   init() {
     plane = new THREE.Mesh(
@@ -27,8 +34,8 @@ export const home = {
     raf.run();
   },
 
-  on() { },
-  off() { },
+  on() {},
+  off() {},
 
   destroy() {
     raf.stop();
@@ -41,4 +48,4 @@ export const home = {
     plane.geometry.dispose();
     plane = null;
   },
-};                   
+};

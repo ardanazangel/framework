@@ -5,35 +5,22 @@ import { track, trackPromise, ready } from "./core/loader.js";
 import { boot } from "./core/boot.js";
 import { media } from "./core/utils/media.js";
 import { lines } from "./core/split-engine/lines-split.js";
-import { form } from "./core/form-engine/hydrate.js";
 import { PREFETCH_TYPES, pageModules } from "./config.js";
 
 import { detect } from "./core/utils/detect.js";
+if (!detect.isMobile) await import("./core/scroll-engine/scroll.js");
 import { initExperience } from "./core/three-engine/index.js";
 
-if (import.meta.env.DEV) import('./core/utils/grid.js')
+if (import.meta.env.DEV) import("./core/utils/grid.js");
 
 await initExperience();
 
-const modules = [media, lines, form];
+const modules = [media, lines];
 
-let scrollEngine = null;
-
-if (!detect.isMobile) {
-  const { scroll, initScroll } = await import("./core/scroll-engine/scroll.js");
-  scroll.on();
-  scrollEngine = scroll.engine;
-  const { page, cache, routes } = await boot({
-    preload: pageModules[location.pathname]?.preload,
-  });
-  initScroll();
-  bootRouter(page, cache, routes);
-} else {
-  const { page, cache, routes } = await boot({
-    preload: pageModules[location.pathname]?.preload,
-  });
-  bootRouter(page, cache, routes);
-}
+const { page, cache, routes } = await boot({
+  preload: pageModules[location.pathname]?.preload,
+});
+bootRouter(page, cache, routes);
 
 function bootRouter(page, cache, routes) {
   const prefetched = new Set(

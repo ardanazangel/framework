@@ -2,6 +2,7 @@ import { home } from './pages/home.js'
 import { about } from './pages/about.js'
 import { morphing } from './pages/morphing.js'
 import { slider } from './pages/slider.js'
+import { uiCard } from './pages/ui-card.js'
 
 // Tipos de ruta que se prefetchean al arrancar
 export const PREFETCH_TYPES = new Set(['home', 'about', 'project'])
@@ -12,4 +13,5 @@ export const pageModules = {
   '/about':    about,
   '/morphing': morphing,
   '/slider':   slider,
+  '/ui-card':  uiCard,
 }
