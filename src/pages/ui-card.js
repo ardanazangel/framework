@@ -1,133 +1,60 @@
-import {
-  THREE,
-  Raf,
-  camera,
-  renderer,
-  scene,
-} from "../core/three-engine/index.js";
-import {
-  Fullscreen,
-  Container,
-  Text,
-  reversePainterSortStable,
-} from "@pmndrs/uikit";
-import Lenis from "lenis";
+import { THREE, camera, scene, addPreRender, removePreRender } from "../core/three-engine/index.js";
+import { MSDFText, loadFont, layoutLetters } from "../core/three-engine/msdf-text.js";
 
-let root = null;
-let scrollContainer = null;
-let lenis = null;
-let raf = null;
-let cube = null;
-let lights = [];
-let cubeScene = null;
+const vph = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180)) * camera.position.z;
+const vpw = vph * (window.innerWidth / window.innerHeight);
 
-const vwd = window.innerWidth / 1920;
+let font        = null;
+let scrollGroup = null;
+let meshes      = [];
+let preRenderFn = null;
+let elapsed     = 0;
 
 export const uiCard = {
   preload() {
-    return [];
+    return [loadFont("/fonts/nmb.json").then((f) => { font = f })];
   },
 
   init() {
-    renderer.localClippingEnabled = true;
-    renderer.setTransparentSort(reversePainterSortStable);
+    const fontSize = vpw * 0.2;
 
-    cubeScene = new THREE.Scene();
-    const ambient = new THREE.AmbientLight(0xffffff, 0.3);
-    const dirLight = new THREE.DirectionalLight(0x3b82f6, 3);
-    dirLight.position.set(3, 3, 5);
-    lights = [ambient, dirLight];
-    cubeScene.add(ambient, dirLight);
+    const a = new MSDFText("A", font, { fontSize, color: "#3b82f6" });
+    const r = new MSDFText("R", font, { fontSize, color: "#3b82f6" });
+    const o = new MSDFText("O", font, { fontSize, color: "#3b82f6" });
+    const c = new MSDFText("C", font, { fontSize, color: "#3b82f6" });
+    const k = new MSDFText("K", font, { fontSize, color: "#3b82f6" });
 
-    cube = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1.8, 1.8),
-      new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        roughness: 1,
-        metalness: 0,
-      }),
-    );
-    cubeScene.add(cube);
+    layoutLetters([a, r, o, c, k], 0.92);
 
-    root = new Fullscreen(renderer, {
-      alignItems: "center",
-      justifyContent: "center",
-    });
-    camera.add(root);
+    scrollGroup = new THREE.Group();
+    scrollGroup.add(a, r, o, c, k);
+    scene.add(scrollGroup);
+    meshes = [a, r, o, c, k];
 
-    scrollContainer = new Container({
-      flexDirection: "column",
-      alignItems: "center",
-      height: "200vh",
-      gap: vwd * 10,
-    });
-    root.add(scrollContainer);
+    const amp   = fontSize * 0.3;
+    const speed = 1.5;
+    const phase = (Math.PI * 2) / meshes.length;
 
-    scrollContainer.add(
-      new Text({ text: "WebGL", fontSize: vwd * 12, color: "#3b82f6" }),
-    );
-    scrollContainer.add(
-      new Text({ text: "eHealth Arena", fontSize: vwd * 12, color: "white" }),
-    );
-    scrollContainer.add(
-      new Text({ text: "3D Showroom", fontSize: vwd * 12, color: "#64748b" }),
-    );
-    scrollContainer.add(
-      new Text({
-        text: "Interactive 3D platform exploring how e-health solutions work in practice.",
-        fontSize: vwd * 12,
-        color: "#94a3b8",
-        wordBreak: "break-word",
-      }),
-    );
-
-    const pxToWorld = window.innerHeight / renderer.domElement.clientHeight;
-
-    lenis = new Lenis({ autoRaf: false });
-    lenis.on("scroll", ({ scroll }) => {
-      if (scrollContainer) scrollContainer.position.y = scroll * pxToWorld;
-    });
-
-    raf = new Raf((delta) => {
-      lenis?.raf(delta * 1000);
-      root.update(delta * 1000);
-      cube.rotation.x += delta * 0.4;
-      cube.rotation.y += delta * 0.6;
-    });
-    raf.run();
+    preRenderFn = (delta) => {
+      elapsed += delta;
+      meshes.forEach((m, i) => {
+        m.position.y = Math.sin(elapsed * speed + i * phase) * amp;
+      });
+    };
+    addPreRender(preRenderFn);
   },
 
-  on() {},
+  on()  {},
   off() {},
 
   destroy() {
-    if (raf) {
-      raf.stop();
-      raf = null;
+    if (preRenderFn) { removePreRender(preRenderFn); preRenderFn = null; }
+    elapsed = 0;
+    if (scrollGroup) {
+      scene.remove(scrollGroup);
+      meshes.forEach((m) => m.dispose());
+      meshes      = [];
+      scrollGroup = null;
     }
-    if (lenis) {
-      lenis.destroy();
-      lenis = null;
-    }
-    if (scrollContainer) {
-      scrollContainer.dispose?.();
-      scrollContainer = null;
-    }
-    if (root) {
-      root.dispose();
-      camera.remove(root);
-      root = null;
-    }
-    if (cube) {
-      cubeScene?.remove(cube);
-      cube.geometry.dispose();
-      cube.material.dispose();
-      cube = null;
-    }
-    if (lights.length) {
-      cubeScene?.remove(...lights);
-      lights = [];
-    }
-    cubeScene = null;
   },
 };

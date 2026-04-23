@@ -11,7 +11,12 @@ export const scene = new THREE.Scene();
 scene.add(camera); // necesario para que Fullscreen de uikit encuentre la cámara
 export let renderer = null;
 
-const raf = new Raf(() => {
+const preRenderFns = new Set()
+export function addPreRender(fn)    { preRenderFns.add(fn) }
+export function removePreRender(fn) { preRenderFns.delete(fn) }
+
+const raf = new Raf((delta) => {
+  preRenderFns.forEach(fn => fn(delta))
   renderer?.render(scene, camera);
 });
 

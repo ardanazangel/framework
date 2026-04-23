@@ -121,11 +121,11 @@ p {
 /* ─── UI Card ─────────────────────────────────────────── */
 
 #ui-card-wrapper {
-  /* En el flujo normal pero invisible: el canvas 3D es lo que se ve */
-  visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
   pointer-events: none;
-  width: fit-content;
-  padding: 40px;
 }
 
 .ui-card {
@@ -140,7 +140,7 @@ p {
 .ui-card-thumb {
   width: 300px;
   height: 120px;
-  background: #1e3a5f;
+  background: transparent;
 }
 
 .ui-card-body {
